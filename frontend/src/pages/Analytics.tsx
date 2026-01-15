@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api";
 import { Link } from "react-router-dom";
 
@@ -501,7 +501,7 @@ export default function Analytics() {
                     </tr>
                 </thead>
                 <tbody>
-                    {sortedPlayerTotals.map((p) => (
+                    {sortedPlayerTotals.map((p: PlayerAnalytics) => (
                         <tr key={p.player_id}>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
                                 <Link to={`/players/${p.player_id}`}>
@@ -579,7 +579,7 @@ export default function Analytics() {
                     </tr>
                 </thead>
                 <tbody>
-                    {sortedPlayerAverages.map((p) => (
+                    {sortedPlayerAverages.map((p: PlayerAnalytics) => (
                         <tr key={`${p.player_id}-avg`}>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
                                 <Link to={`/players/${p.player_id}`}>

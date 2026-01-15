@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiFetch, clearToken } from "../api";
 
@@ -494,7 +494,7 @@ export default function PlayerPage() {
                                     Opponent
                                 </td>
                             </tr>
-                            {sortSplitRows(splitsTotals.opponents, splitTotalsSortKey, splitTotalsSortDir).map((row) => (
+                    {sortSplitRows(splitsTotals.opponents, splitTotalsSortKey, splitTotalsSortDir).map((row: SplitRow) => (
                                 <tr key={`opp-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
@@ -558,7 +558,7 @@ export default function PlayerPage() {
                                     Opponent
                                 </td>
                             </tr>
-                            {sortSplitRows(splitsAverages.opponents, splitAvgSortKey, splitAvgSortDir).map((row) => (
+                    {sortSplitRows(splitsAverages.opponents, splitAvgSortKey, splitAvgSortDir).map((row: SplitRow) => (
                                 <tr key={`opp-avg-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
