@@ -52,6 +52,25 @@ const toStr = (n: number) => (n === 0 ? "" : String(n));
 const toInt = (s: string) => (s.trim() === "" ? 0 : Number(s));
 const pct = (made: number, attempts: number) =>
     attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
+const formatMinutes = (minutes: number) => {
+    const totalSeconds = Math.round(minutes * 60);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+const parseMinutes = (value: string) => {
+    const trimmed = value.trim();
+    if (trimmed === "") return 0;
+    if (trimmed.includes(":")) {
+        const [mm, ss] = trimmed.split(":");
+        const mins = Number(mm);
+        const secs = Number(ss);
+        if (Number.isNaN(mins) || Number.isNaN(secs)) return 0;
+        return mins + secs / 60;
+    }
+    const mins = Number(trimmed);
+    return Number.isNaN(mins) ? 0 : mins;
+};
 
 export default function BoxScore() {
     const { gameId } = useParams();
@@ -99,7 +118,7 @@ export default function BoxScore() {
             return {
                 player_id: pl.id,
                 starter: sl ? String(sl.starter ?? 0) : index < 5 ? "1" : "0",
-                minutes: sl ? toStr(sl.minutes) : "",
+                minutes: sl ? formatMinutes(sl.minutes) : "",
                 points: sl ? toStr(sl.points) : "",
                 rebounds: sl ? toStr(sl.rebounds) : "",
                 assists: sl ? toStr(sl.assists) : "",
@@ -154,7 +173,7 @@ export default function BoxScore() {
         const payload = {
             player_id: playerId,
             game_id: gid,
-            minutes: toInt(row.minutes),
+            minutes: parseMinutes(row.minutes),
             points: toInt(row.points),
             rebounds: toInt(row.rebounds),
             assists: toInt(row.assists),
@@ -348,8 +367,8 @@ export default function BoxScore() {
                                         ).map(([key, label]) => (
                                             <td key={key} style={cellStyle}>
                                                 <input
-                                                    type="number"
-                                                    placeholder={label}
+                                                    type={key === "minutes" ? "text" : "number"}
+                                                    placeholder={key === "minutes" ? "MM:SS" : label}
                                                     value={r[key]}
                                                     disabled={!isAdmin}
                                                     onChange={(e) => setCell(r.player_id, key, e.target.value)}
@@ -372,7 +391,7 @@ export default function BoxScore() {
                     <tr>
                         <td style={{ padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>Team Totals</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }} />
-                        <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.minutes}</td>
+                        <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{formatMinutes(teamTotals.minutes)}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.points}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.rebounds}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.assists}</td>

@@ -89,10 +89,18 @@ export default function PlayerPage() {
     const pct = (made: number, attempts: number) =>
         attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
 
+    const formatMinutes = (minutes: number) => {
+        const totalSeconds = Math.round(minutes * 60);
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
+    };
+
     const renderStatCell = (row: StatTotals, key: StatColumnKey) => {
         if (key === "FG_PCT") return pct(row.FG, row.FGA);
         if (key === "FG3_PCT") return pct(row.FG3, row.FGA3);
         if (key === "FT_PCT") return pct(row.FT, row.FTA);
+        if (key === "minutes") return formatMinutes(row.minutes);
         return row[key];
     };
 
@@ -199,7 +207,7 @@ export default function PlayerPage() {
                             </td>
 
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center"}}>
-                                {r.minutes}
+                                {formatMinutes(r.minutes)}
                             </td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center"}}>
                                 {r.points}

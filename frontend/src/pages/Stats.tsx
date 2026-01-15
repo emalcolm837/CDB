@@ -94,11 +94,24 @@ export default function Stats() {
         }
 
         const toInt = (s: string) => (s.trim() === "" ? 0 : Number(s));
+        const parseMinutes = (value: string) => {
+            const trimmed = value.trim();
+            if (trimmed === "") return 0;
+            if (trimmed.includes(":")) {
+                const [mm, ss] = trimmed.split(":");
+                const mins = Number(mm);
+                const secs = Number(ss);
+                if (Number.isNaN(mins) || Number.isNaN(secs)) return 0;
+                return mins + secs / 60;
+            }
+            const mins = Number(trimmed);
+            return Number.isNaN(mins) ? 0 : mins;
+        };
 
         const payload = {
             player_id: playerId,
             game_id: selectedGameId,
-            minutes: toInt(minutes),
+            minutes: parseMinutes(minutes),
             points: toInt(points),
             rebounds: toInt(rebounds),
             assists: toInt(assists),
@@ -198,7 +211,7 @@ export default function Stats() {
                             ))}
                         </select>
                             
-                        <input type="number" value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="MIN" />
+                        <input type="text" value={minutes} onChange={(e) => setMinutes(e.target.value)} placeholder="MM:SS" />
                         <input type="number" value={points} onChange={(e) => setPoints(e.target.value)} placeholder="PTS" />
                         <input type="number" value={rebounds} onChange={(e) => setRebounds(e.target.value)} placeholder="REB" />
                         <input type="number" value={assists} onChange={(e) => setAssists(e.target.value)} placeholder="AST" />

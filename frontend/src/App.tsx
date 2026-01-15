@@ -4,7 +4,6 @@ import { getToken, clearToken, getUsername, getRole } from "./api";
 import Login from "./pages/Login";
 import Players from "./pages/Players";
 import Games from "./pages/Games";
-import Stats from "./pages/Stats";
 import BoxScore from "./pages/BoxScore";
 import PlayerPage from "./pages/PlayerPage";
 import Analytics from "./pages/Analytics";
@@ -26,10 +25,6 @@ export default function App() {
 
         <Link to="/players" style={{ marginRight: 12}}>
           Roster
-        </Link>
-
-        <Link to="/stats" style={{ marginRight: 12 }}>
-          Stats
         </Link>
 
         <Link to="/games" style={{ marginRight: 12 }}>
@@ -60,7 +55,6 @@ export default function App() {
         <Route path="/" element={<Navigate to="/players" />} />
         <Route path="/players" element={<Players />} />
         <Route path="/games" element={<Games />} />
-        <Route path="/stats" element={<Stats />} />
         <Route path="/games/:gameId" element={<BoxScore />} />
         <Route path="/players/:playerId" element={<PlayerPage />} />
         <Route path="/analytics" element={<Analytics />} />
