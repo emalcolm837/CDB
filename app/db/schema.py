@@ -27,7 +27,7 @@ def init_db(conn):
             id SERIAL PRIMARY KEY,
             player_id INTEGER NOT NULL,
             game_id INTEGER NOT NULL,
-            minutes INTEGER DEFAULT 0,
+            minutes NUMERIC(6,3) DEFAULT 0,
             points INTEGER DEFAULT 0,
             rebounds INTEGER DEFAULT 0,
             assists INTEGER DEFAULT 0,

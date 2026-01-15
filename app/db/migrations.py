@@ -71,3 +71,17 @@ def migrate_stat_line_add_shooting_columns(conn):
         cursor.execute(f"ALTER TABLE stat_line ADD COLUMN IF NOT EXISTS {column} INTEGER DEFAULT 0;")
 
     conn.commit()
+
+def migrate_stat_line_minutes_to_numeric(conn):
+    """
+    Converts stat_line.minutes to NUMERIC to preserve MM:SS precision.
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        ALTER TABLE stat_line
+        ALTER COLUMN minutes TYPE NUMERIC(6,3)
+        USING minutes::numeric;
+        """
+    )
+    conn.commit()
