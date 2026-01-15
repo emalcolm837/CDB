@@ -2,6 +2,14 @@ import psycopg
 
 # Handles logic for creating and fetching games.
 
+
+def _row_id(row):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row.get("id")
+    return row[0]
+
 def create_game(conn, date, opponent, location=None):
     """
     Imserts a new game into the database.
@@ -20,7 +28,7 @@ def create_game(conn, date, opponent, location=None):
 
         conn.commit()
         row = cursor.fetchone()
-        return row["id"] if row else None
+        return _row_id(row)
     except psycopg.errors.UniqueViolation:
         return None
 

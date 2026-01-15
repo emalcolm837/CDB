@@ -1,5 +1,13 @@
 # Handles logic for creating and fetching players. 
 
+
+def _row_id(row):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row.get("id")
+    return row[0]
+
 def create_player(conn, name, jersey_number=None, position=None):
     """
     Inserts a new player into the database.
@@ -18,7 +26,7 @@ def create_player(conn, name, jersey_number=None, position=None):
 
     conn.commit()
     row = cursor.fetchone()
-    return row["id"] if row else None
+    return _row_id(row)
 
 def get_all_players(conn):
     """

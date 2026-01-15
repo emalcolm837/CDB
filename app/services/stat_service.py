@@ -1,6 +1,13 @@
 # Handles logic for creating and fetching statlines for 
 # individual games. 
 
+def _row_id(row):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row.get("id")
+    return row[0]
+
 def create_statline(
     conn,
     player_id,
@@ -43,7 +50,7 @@ def create_statline(
 
     conn.commit()
     row = cursor.fetchone()
-    return row["id"] if row else None
+    return _row_id(row)
 
 def update_statline(
     conn,
