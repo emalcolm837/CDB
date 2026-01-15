@@ -10,13 +10,15 @@ def create_player(conn, name, jersey_number=None, position=None):
     cursor.execute(
         """
         INSERT INTO players (name, jersey_number, position)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
+        RETURNING id
         """,
         (name, jersey_number, position)
     )
 
     conn.commit()
-    return cursor.lastrowid
+    row = cursor.fetchone()
+    return row["id"] if row else None
 
 def get_all_players(conn):
     """
@@ -34,7 +36,7 @@ def get_player_by_id(conn, player_id):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM players WHERE id = ?",
+        "SELECT * FROM players WHERE id = %s",
         (player_id,)
     )
 
@@ -42,6 +44,6 @@ def get_player_by_id(conn, player_id):
 
 def delete_player(conn, player_id):
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM players WHERE id = ?", (player_id,))
+    cursor.execute("DELETE FROM players WHERE id = %s", (player_id,))
     conn.commit()
     return cursor.rowcount > 0

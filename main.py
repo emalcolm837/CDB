@@ -63,5 +63,7 @@ def main():
     print("Totals:", dict(totals))
     print("Averages:", dict(averages))
 
+
+
 if __name__ == "__main__":
     main()

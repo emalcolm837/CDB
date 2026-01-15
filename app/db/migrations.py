@@ -1,6 +1,6 @@
 def migrate_games_add_unique(conn):
     """
-    Adds UNIQUE(date, opponent, location) to games by rebuilding the table.
+    Adds UNIQUE(date, opponent, location) to games using Postgres-native SQL.
     Also dedupes existing games and remaps stat_lines.game_id accordingly.
     """
     cursor = conn.cursor()
@@ -9,41 +9,46 @@ def migrate_games_add_unique(conn):
 
     cursor.execute(
         """
-        CREATE TABLE games_new (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            opponent TEXT NOT NULL,
-            location TEXT,
-            UNIQUE(date, opponent, location)
-        );
+        WITH keepers AS (
+            SELECT MIN(id) AS keep_id, date, opponent, location
+            FROM games
+            GROUP BY date, opponent, location
+        )
+        UPDATE stat_line s
+        SET game_id = k.keep_id
+        FROM games g
+        JOIN keepers k
+            ON g.date = k.date
+            AND g.opponent = k.opponent
+            AND (g.location IS NOT DISTINCT FROM k.location)
+        WHERE s.game_id = g.id
+            AND g.id <> k.keep_id;
         """
     )
 
     cursor.execute(
         """
-        INSERT INTO games_new (id, date, opponent, location)
-        SELECT MIN(id) AS id, date, opponent, location
-        FROM games
-        GROUP BY date, opponent, location;
+        WITH keepers AS (
+            SELECT MIN(id) AS keep_id, date, opponent, location
+            FROM games
+            GROUP BY date, opponent, location
+        )
+        DELETE FROM games g
+        USING keepers k
+        WHERE g.date = k.date
+            AND g.opponent = k.opponent
+            AND (g.location IS NOT DISTINCT FROM k.location)
+            AND g.id <> k.keep_id;
         """
     )
 
     cursor.execute(
         """
-        UPDATE stat_line
-        SET game_id = (
-            SELECT MIN(g2.id)
-            FROM games g2
-            WHERE g2.date = (SELECT g.date FROM games g WHERE g.id = stat_line.game_id)
-                AND g2.opponent = (SELECT g.opponent FROM games g WHERE g.id = stat_line.game_id)
-                AND ( (g2.location IS NULL AND (SELECT g.location FROM games g WHERE g.id = stat_line.game_id) IS NULL)
-                        OR g2.location = (SELECT g.location FROM GAMES g WHERE g.id = stat_line.game_id) )
-        );
+        CREATE UNIQUE INDEX IF NOT EXISTS games_unique_idx
+        ON games (date, opponent, location);
         """
     )
 
-    cursor.execute("DROP TABLE games;")
-    cursor.execute("ALTER TABLE games_new RENAME TO games;")
     conn.commit()
 
 def migrate_stat_line_add_shooting_columns(conn):
@@ -51,8 +56,6 @@ def migrate_stat_line_add_shooting_columns(conn):
     Adds shooting/plus-minus columns to stat_line if missing.
     """
     cursor = conn.cursor()
-    cursor.execute("PRAGMA table_info(stat_line);")
-    existing = {row[1] for row in cursor.fetchall()}
     columns = [
         "FG",
         "FGA",
@@ -65,7 +68,6 @@ def migrate_stat_line_add_shooting_columns(conn):
     ]
 
     for column in columns:
-        if column not in existing:
-            cursor.execute(f"ALTER TABLE stat_line ADD COLUMN {column} INTEGER DEFAULT 0;")
+        cursor.execute(f"ALTER TABLE stat_line ADD COLUMN IF NOT EXISTS {column} INTEGER DEFAULT 0;")
 
     conn.commit()

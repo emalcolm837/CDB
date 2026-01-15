@@ -40,7 +40,7 @@ def get_player_totals(conn, player_id: int) -> dict:
         SELECT
             {_sum_select("s")}
         FROM stat_line s
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
         """,
         (player_id,),
     )
@@ -55,7 +55,7 @@ def get_player_averages(conn, player_id: int) -> dict:
         SELECT
             {_avg_select("s")}
         FROM stat_line s
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
         """,
         (player_id,),
     )
@@ -72,7 +72,7 @@ def _location_splits(conn, player_id: int, agg_select: str) -> list[dict]:
             {agg_select}
         FROM stat_line s
         JOIN games g ON g.id = s.game_id
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
             AND g.location IN ('Home', 'Away')
         GROUP BY g.location
         """,
@@ -100,7 +100,7 @@ def _opponent_splits(conn, player_id: int, agg_select: str) -> list[dict]:
             {agg_select}
         FROM stat_line s
         JOIN games g ON g.id = s.game_id
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
         GROUP BY g.opponent
         ORDER BY g.opponent
         """,

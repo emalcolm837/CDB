@@ -34,14 +34,16 @@ def create_statline(
         INSERT INTO stat_line (
             player_id, game_id, minutes, points, rebounds, assists,
             steals, blocks, turnovers, fouls, FG, FGA, FG3, FGA3, FT, FTA, PM, starter)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
         (player_id, game_id, minutes, points, rebounds, assists,
             steals, blocks, turnovers, fouls, FG, FGA, FG3, FGA3, FT, FTA, PM, starter)
     )
 
     conn.commit()
-    return cursor.lastrowid
+    row = cursor.fetchone()
+    return row["id"] if row else None
 
 def update_statline(
     conn,
@@ -81,67 +83,67 @@ def update_statline(
     # overwriting all columns on every update.
 
     if minutes is not None:
-        updates.append("minutes = ?")
+        updates.append("minutes = %s")
         values.append(minutes)
 
     if points is not None:
-        updates.append("points = ?")
+        updates.append("points = %s")
         values.append(points)
 
     if rebounds is not None:
-        updates.append("rebounds = ?")
+        updates.append("rebounds = %s")
         values.append(rebounds)
 
     if assists is not None:
-        updates.append("assists = ?")
+        updates.append("assists = %s")
         values.append(assists)
 
     if steals is not None:
-        updates.append("steals = ?")
+        updates.append("steals = %s")
         values.append(steals)
 
     if blocks is not None:
-        updates.append("blocks = ?")
+        updates.append("blocks = %s")
         values.append(blocks)
 
     if turnovers is not None:
-        updates.append("turnovers = ?")
+        updates.append("turnovers = %s")
         values.append(turnovers)
 
     if fouls is not None:
-        updates.append("fouls = ?")
+        updates.append("fouls = %s")
         values.append(fouls)
 
     if FG is not None:
-        updates.append("FG = ?")
+        updates.append("FG = %s")
         values.append(FG)
 
     if FGA is not None:
-        updates.append("FGA = ?")
+        updates.append("FGA = %s")
         values.append(FGA)
 
     if FG3 is not None:
-        updates.append("FG3 = ?")
+        updates.append("FG3 = %s")
         values.append(FG3)
 
     if FGA3 is not None:
-        updates.append("FGA3 = ?")
+        updates.append("FGA3 = %s")
         values.append(FGA3)
 
     if FT is not None:
-        updates.append("FT = ?")
+        updates.append("FT = %s")
         values.append(FT)
 
     if FTA is not None:
-        updates.append("FTA = ?")
+        updates.append("FTA = %s")
         values.append(FTA)
 
     if PM is not None:
-        updates.append("PM = ?")
+        updates.append("PM = %s")
         values.append(PM)
 
     if starter is not None:
-        updates.append("starter = ?")
+        updates.append("starter = %s")
         values.append(starter)
 
     if not updates:
@@ -152,8 +154,8 @@ def update_statline(
     query = f"""
         UPDATE stat_line
         SET {', '.join(updates)}
-        WHERE player_id = ?
-        AND game_id = ?
+        WHERE player_id = %s
+        AND game_id = %s
     """
 
     cursor.execute(query, values)
@@ -170,7 +172,7 @@ def all_player_statlines(conn, player_id):
 
     cursor.execute(
         """
-        SELECT * FROM stat_line WHERE player_id = ?
+        SELECT * FROM stat_line WHERE player_id = %s
         """,
         (player_id,)
     )
@@ -187,8 +189,8 @@ def player_stats_for_game(conn, player_id, game_id):
         """
         SELECT * 
         FROM stat_line 
-        WHERE player_id = ? 
-        AND game_id = ?
+        WHERE player_id = %s
+        AND game_id = %s
         """,
         (player_id, game_id)
     )
@@ -203,7 +205,7 @@ def get_stats_for_game(conn, game_id):
 
     cursor.execute(
         """
-        SELECT * FROM stat_line WHERE game_id = ?
+        SELECT * FROM stat_line WHERE game_id = %s
         """,
         (game_id,)
     )    
@@ -213,7 +215,7 @@ def get_stats_for_game(conn, game_id):
 def get_statlines_for_game(conn, game_id: int):
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT * FROM stat_line WHERE game_id = ? ORDER BY player_id",
+        "SELECT * FROM stat_line WHERE game_id = %s ORDER BY player_id",
         (game_id,),
     )
     return cursor.fetchall()
@@ -223,7 +225,7 @@ def delete_statline(conn, player_id, game_id):
     cursor.execute(
         """
         DELETE FROM stat_line
-        WHERE player_id = ? AND game_id = ?
+        WHERE player_id = %s AND game_id = %s
         """,
         (player_id, game_id),
     )
@@ -235,7 +237,7 @@ def delete_statlines_for_player(conn, player_id):
     cursor.execute(
         """
         DELETE FROM stat_line
-        WHERE player_id = ?
+        WHERE player_id = %s
         """,
         (player_id,),
     )
@@ -245,7 +247,7 @@ def delete_statlines_for_player(conn, player_id):
 def delete_statlines_for_game(conn, game_id):
     cursor = conn.cursor()
     cursor.execute(
-        "DELETE FROM stat_line WHERE game_id = ?",
+        "DELETE FROM stat_line WHERE game_id = %s",
         (game_id,),
     )
     conn.commit()
@@ -279,7 +281,7 @@ def upsert_statline(
             player_id, game_id, minutes, points, rebounds, assists, steals, blocks, turnovers, fouls,
             FG, FGA, FG3, FGA3, FT, FTA, PM, starter
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(player_id, game_id) DO UPDATE SET
             minutes=excluded.minutes,
             points=excluded.points,
@@ -330,7 +332,7 @@ def get_game_log_for_player(conn, player_id: int):
             s.PM AS PM
         FROM stat_line s
         JOIN games g ON g.id = s.game_id
-        WHERE s.player_id = ?
+        WHERE s.player_id = %s
         ORDER BY g.date
         """,
         (player_id,),

@@ -1,4 +1,4 @@
-import sqlite3 
+import psycopg
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -34,7 +34,7 @@ def admin_create_user(
     try:
         user_id = create_user(conn, payload.username, payload.password, payload.role)
         return {"user_id": user_id}
-    except sqlite3.IntegrityError:
+    except psycopg.errors.UniqueViolation:
         raise HTTPException(status_code=409, detail="Username already exists")
     
 @router.get("/me")

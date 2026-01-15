@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg
 
 # Handles logic for creating and fetching games.
 
@@ -12,14 +12,16 @@ def create_game(conn, date, opponent, location=None):
         cursor.execute(
             """
             INSERT INTO games (date, opponent, location)
-            VALUES (?, ?, ?)
+            VALUES (%s, %s, %s)
+            RETURNING id
             """,
             (date, opponent, location)
         )
 
         conn.commit()
-        return cursor.lastrowid
-    except sqlite3.IntegrityError:
+        row = cursor.fetchone()
+        return row["id"] if row else None
+    except psycopg.errors.UniqueViolation:
         return None
 
 
@@ -39,7 +41,7 @@ def get_game_by_id(conn, game_id):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM games WHERE id = ?",
+        "SELECT * FROM games WHERE id = %s",
         (game_id,)
     )
 
@@ -47,6 +49,6 @@ def get_game_by_id(conn, game_id):
 
 def delete_game(conn, game_id):
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM games WHERE id = ?", (game_id,))
+    cursor.execute("DELETE FROM games WHERE id = %s", (game_id,))
     conn.commit()
     return cursor.rowcount > 0

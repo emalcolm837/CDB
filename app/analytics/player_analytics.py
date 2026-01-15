@@ -24,7 +24,7 @@ def get_player_totals(conn, player_id):
             SUM(FTA) AS total_FTA,
             SUM(PM) AS total_PM
         FROM stat_line
-        WHERE player_id = ?
+        WHERE player_id = %s
         """,
         (player_id,)
     )
@@ -56,7 +56,7 @@ def get_player_averages(conn, player_id):
             AVG(FTA) AS avg_FTA,
             AVG(PM) AS avg_PM
         FROM stat_line
-        WHERE player_id = ?
+        WHERE player_id = %s
         """,
         (player_id,)
     )

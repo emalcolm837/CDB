@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg
 from fastapi import APIRouter, Depends, HTTPException
 from app.api.deps import get_db
 from app.api.models import StatLineCreate, StatLineUpdate, StatLineOut
@@ -46,7 +46,7 @@ def add_statline(payload: StatLineCreate, conn=Depends(get_db)):
             starter=payload.starter,
         )
         return {"stat_id": stat_id}
-    except sqlite3.IntegrityError as e:
+    except psycopg.errors.IntegrityError as e:
         raise HTTPException(status_code=409, detail=str(e))
     
 @router.patch("/by-player/{player_id}/by-game/{game_id}", response_model=dict, dependencies=[Depends(require_admin)])
@@ -76,7 +76,7 @@ def patch_statline(player_id: int, game_id: int, payload: StatLineUpdate, conn=D
         if not updated:
             raise HTTPException(status_code=404, detail="Stat line not found")
         return {"updated": True}
-    except sqlite3.IntegrityError as e:
+    except psycopg.errors.IntegrityError as e:
         raise HTTPException(status_code=409, detail=str(e))
     
 @router.delete("/by-player/{player_id}/by-game/{game_id}", response_model=dict, dependencies=[Depends(require_admin)])

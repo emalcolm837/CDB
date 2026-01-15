@@ -89,7 +89,7 @@ def leaders(conn, limit: int = 5):
             LEFT JOIN stat_line sl ON sl.player_id = p.id
             GROUP by p.id
             ORDER BY value DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (limit,),
         )

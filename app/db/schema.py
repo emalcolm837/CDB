@@ -5,16 +5,16 @@ def init_db(conn):
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS players (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             jersey_number INTEGER,
-            position TEXT 
+            position TEXT
         );
     """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS games (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             date TEXT NOT NULL,
             opponent TEXT NOT NULL,
             location TEXT,
@@ -24,7 +24,7 @@ def init_db(conn):
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS stat_line (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             player_id INTEGER NOT NULL,
             game_id INTEGER NOT NULL,
             minutes INTEGER DEFAULT 0,
@@ -51,11 +51,11 @@ def init_db(conn):
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password_hash TEXT NOT NULL,
             role TEXT NOT NULL CHECK(role IN ('admin', 'viewer')),
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            created_at TIMESTAMP NOT NULL DEFAULT (now())
         );
     """)
 
