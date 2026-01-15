@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { setToken } from "../api";
+import { setToken, setUserInfo } from "../api";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -33,9 +33,12 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         const meRes = await fetch(`${BASE_URL}/auth/me`, {
             headers: { Authorization: `Bearer ${data.access_token}` },
         });
-        const me = await meRes.json();
-        localStorage.setItem("username", me.username);
-        localStorage.setItem("role", me.role);
+        if (meRes.ok) {
+            const me = await meRes.json();
+            setUserInfo(me.username, me.role);
+        } else {
+            setUserInfo("unknown", "viewer");
+        }
 
         onLogin();
     }
