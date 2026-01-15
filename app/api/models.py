@@ -8,6 +8,11 @@ class PlayerCreate(BaseModel):
     jersey_number: Optional[int] = None
     position: Optional[str] = None
 
+class PlayerUpdate(BaseModel):
+    name: Optional[str] = None
+    jersey_number: Optional[int] = None
+    position: Optional[str] = None
+
 class PlayerOut(BaseModel):
     id: int
     name: str

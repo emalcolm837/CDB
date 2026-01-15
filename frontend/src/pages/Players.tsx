@@ -18,6 +18,10 @@ export default function Players() {
     const [name, setName] = useState("");
     const [jersey, setJersey] = useState<number>(0);
     const [pos, setPos] = useState("PG");
+    const [editId, setEditId] = useState<number | null>(null);
+    const [editName, setEditName] = useState("");
+    const [editJersey, setEditJersey] = useState<string>("");
+    const [editPos, setEditPos] = useState("");
 
     async function load() {
         setErr(null);
@@ -119,6 +123,47 @@ export default function Players() {
         await load();
     }
 
+    function startEdit(p: Player) {
+        setEditId(p.id);
+        setEditName(p.name);
+        setEditJersey(String(p.jersey_number ?? ""));
+        setEditPos(p.position ?? "");
+    }
+
+    function cancelEdit() {
+        setEditId(null);
+        setEditName("");
+        setEditJersey("");
+        setEditPos("");
+    }
+
+    async function saveEdit(playerId: number) {
+        setErr(null);
+        const payload = {
+            name: editName,
+            jersey_number: editJersey.trim() === "" ? null : Number(editJersey),
+            position: editPos,
+        };
+
+        const res = await apiFetch(`/players/${playerId}`, {
+            method: "PATCH",
+            body: JSON.stringify(payload),
+        });
+
+        if (res.status === 403) {
+            setErr("You are a viewer. Admin permission required to edit players.");
+            return;
+        }
+        if (!res.ok) {
+            const msg = await res.text();
+            setErr(msg || "Update failed");
+            return;
+        }
+
+        cancelEdit();
+        await load();
+    }
+
     return (
         <div style={{ maxWidth: 720, margin: "40px auto", fontFamily: "system-ui" }}>
             <h2>Players</h2>
@@ -169,13 +214,44 @@ export default function Players() {
                     {sortedPlayers.map((p) => (
                         <tr key={p.id}>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
-                                <Link to={`/players/${p.id}`}>{p.name}</Link>
+                                {editId === p.id ? (
+                                    <input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                                ) : (
+                                    <Link to={`/players/${p.id}`}>{p.name}</Link>
+                                )}
                             </td>
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.jersey_number}</td>
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.position}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
+                                {editId === p.id ? (
+                                    <input
+                                        type="number"
+                                        value={editJersey}
+                                        onChange={(e) => setEditJersey(e.target.value)}
+                                        style={{ width: 80 }}
+                                    />
+                                ) : (
+                                    p.jersey_number
+                                )}
+                            </td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
+                                {editId === p.id ? (
+                                    <input value={editPos} onChange={(e) => setEditPos(e.target.value)} />
+                                ) : (
+                                    p.position
+                                )}
+                            </td>
                             {isAdmin && (
                                 <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                    <button onClick={() => deletePlayer(p.id)}>Delete</button>
+                                    {editId === p.id ? (
+                                        <>
+                                            <button onClick={() => saveEdit(p.id)}>Save</button>
+                                            <button style={{ marginLeft: 6 }} onClick={cancelEdit}>Cancel</button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button onClick={() => startEdit(p)}>Edit</button>
+                                            <button style={{ marginLeft: 6 }} onClick={() => deletePlayer(p.id)}>Delete</button>
+                                        </>
+                                    )}
                                 </td>
                             )}
                         </tr>

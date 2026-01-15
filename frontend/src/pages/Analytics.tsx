@@ -74,6 +74,14 @@ export default function Analytics() {
     const [teamSplitsTotals, setTeamSplitsTotals] = useState<TeamSplits | null>(null);
     const [teamSplitsAverages, setTeamSplitsAverages] = useState<TeamSplits | null>(null);
     const [err, setErr] = useState<string | null>(null);
+    const [playerTotalsSortKey, setPlayerTotalsSortKey] = useState<string | null>(null);
+    const [playerTotalsSortDir, setPlayerTotalsSortDir] = useState<"desc" | "asc" | null>(null);
+    const [playerAvgSortKey, setPlayerAvgSortKey] = useState<string | null>(null);
+    const [playerAvgSortDir, setPlayerAvgSortDir] = useState<"desc" | "asc" | null>(null);
+    const [teamSplitsTotalsSortKey, setTeamSplitsTotalsSortKey] = useState<StatColumnKey | null>(null);
+    const [teamSplitsTotalsSortDir, setTeamSplitsTotalsSortDir] = useState<"desc" | "asc" | null>(null);
+    const [teamSplitsAvgSortKey, setTeamSplitsAvgSortKey] = useState<StatColumnKey | null>(null);
+    const [teamSplitsAvgSortDir, setTeamSplitsAvgSortDir] = useState<"desc" | "asc" | null>(null);
 
     type StatColumnKey = keyof TeamStats | "FG_PCT" | "FG3_PCT" | "FT_PCT";
     const statColumns: Array<[StatColumnKey, string]> = [
@@ -101,7 +109,7 @@ export default function Analytics() {
         attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
 
     const formatMinutes = (minutes: number) => {
-        const totalSeconds = Math.round(minutes * 60);
+        const totalSeconds = Math.floor(minutes * 60);
         const mins = Math.floor(totalSeconds / 60);
         const secs = totalSeconds % 60;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -113,6 +121,110 @@ export default function Analytics() {
         if (key === "FT_PCT") return pct(row.FT, row.FTA);
         if (key === "minutes") return formatMinutes(row.minutes);
         return row[key];
+    };
+
+    const toggleSort = (
+        key: string,
+        currentKey: string | null,
+        currentDir: "desc" | "asc" | null,
+        setKey: (v: string | null) => void,
+        setDir: (v: "desc" | "asc" | null) => void,
+    ) => {
+        if (currentKey !== key) {
+            setKey(key);
+            setDir("desc");
+            return;
+        }
+        if (currentDir === "desc") setDir("asc");
+        else if (currentDir === "asc") {
+            setKey(null);
+            setDir(null);
+        } else {
+            setDir("desc");
+        }
+    };
+
+    const sortIndicator = (key: string, currentKey: string | null, currentDir: "desc" | "asc" | null) => {
+        if (currentKey !== key || !currentDir) return "";
+        return currentDir === "asc" ? " ^" : " v";
+    };
+
+    const getPlayerValue = (p: PlayerAnalytics, key: string) => {
+        switch (key) {
+            case "FG_PCT":
+                return p.total_FGA === 0 ? -1 : p.total_FG / p.total_FGA;
+            case "FG3_PCT":
+                return p.total_FGA3 === 0 ? -1 : p.total_FG3 / p.total_FGA3;
+            case "FT_PCT":
+                return p.total_FTA === 0 ? -1 : p.total_FT / p.total_FTA;
+            case "avg_FG_PCT":
+                return p.avg_FGA === 0 ? -1 : p.avg_FG / p.avg_FGA;
+            case "avg_FG3_PCT":
+                return p.avg_FGA3 === 0 ? -1 : p.avg_FG3 / p.avg_FGA3;
+            case "avg_FT_PCT":
+                return p.avg_FTA === 0 ? -1 : p.avg_FT / p.avg_FTA;
+            default:
+                return (p as any)[key] ?? 0;
+        }
+    };
+
+    const sortedPlayerTotals = useMemo(() => {
+        if (!playerTotalsSortKey || !playerTotalsSortDir) return players;
+        const sorted = [...players].sort((a, b) => {
+            const av = getPlayerValue(a, playerTotalsSortKey);
+            const bv = getPlayerValue(b, playerTotalsSortKey);
+            if (typeof av === "string" || typeof bv === "string") {
+                const cmp = String(av).localeCompare(String(bv));
+                return playerTotalsSortDir === "desc" ? -cmp : cmp;
+            }
+            if (av === bv) return 0;
+            return playerTotalsSortDir === "desc" ? bv - av : av - bv;
+        });
+        return sorted;
+    }, [players, playerTotalsSortKey, playerTotalsSortDir]);
+
+    const sortedPlayerAverages = useMemo(() => {
+        if (!playerAvgSortKey || !playerAvgSortDir) return players;
+        const sorted = [...players].sort((a, b) => {
+            const av = getPlayerValue(a, playerAvgSortKey);
+            const bv = getPlayerValue(b, playerAvgSortKey);
+            if (typeof av === "string" || typeof bv === "string") {
+                const cmp = String(av).localeCompare(String(bv));
+                return playerAvgSortDir === "desc" ? -cmp : cmp;
+            }
+            if (av === bv) return 0;
+            return playerAvgSortDir === "desc" ? bv - av : av - bv;
+        });
+        return sorted;
+    }, [players, playerAvgSortKey, playerAvgSortDir]);
+
+    const sortSplitRows = (
+        rows: SplitRow[],
+        key: StatColumnKey | null,
+        dir: "desc" | "asc" | null,
+    ) => {
+        if (!key || !dir) return rows;
+        const sorted = [...rows].sort((a, b) => {
+            const av =
+                key === "FG_PCT"
+                    ? a.FGA === 0 ? -1 : a.FG / a.FGA
+                    : key === "FG3_PCT"
+                        ? a.FGA3 === 0 ? -1 : a.FG3 / a.FGA3
+                        : key === "FT_PCT"
+                            ? a.FTA === 0 ? -1 : a.FT / a.FTA
+                            : (a as any)[key];
+            const bv =
+                key === "FG_PCT"
+                    ? b.FGA === 0 ? -1 : b.FG / b.FGA
+                    : key === "FG3_PCT"
+                        ? b.FGA3 === 0 ? -1 : b.FG3 / b.FGA3
+                        : key === "FT_PCT"
+                            ? b.FTA === 0 ? -1 : b.FT / b.FTA
+                            : (b as any)[key];
+            if (av === bv) return 0;
+            return dir === "desc" ? bv - av : av - bv;
+        });
+        return sorted;
     };
 
     async function load() {
@@ -177,11 +289,25 @@ export default function Analytics() {
                     <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
                         <thead>
                             <tr>
-                                {statColumns.map(([, label]) => (
-                                    <th key={label} style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "center" }}>
-                                        {label}
-                                    </th>
-                                ))}
+                    {statColumns.map(([key, label]) => (
+                        <th key={label} style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "center" }}>
+                            <span
+                                style={{ cursor: "pointer" }}
+                                onClick={() =>
+                                    toggleSort(
+                                        key as string,
+                                        teamSplitsTotalsSortKey as string | null,
+                                        teamSplitsTotalsSortDir,
+                                        (v) => setTeamSplitsTotalsSortKey(v as StatColumnKey | null),
+                                        setTeamSplitsTotalsSortDir,
+                                    )
+                                }
+                            >
+                                {label}
+                                {sortIndicator(key as string, teamSplitsTotalsSortKey as string | null, teamSplitsTotalsSortDir)}
+                            </span>
+                        </th>
+                    ))}
                             </tr>
                         </thead>
                         <tbody>
@@ -258,7 +384,7 @@ export default function Analytics() {
                                     Opponent
                                 </td>
                             </tr>
-                            {teamSplitsTotals.opponents.map((row) => (
+                            {sortSplitRows(teamSplitsTotals.opponents, teamSplitsTotalsSortKey, teamSplitsTotalsSortDir).map((row) => (
                                 <tr key={`opp-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
@@ -280,11 +406,25 @@ export default function Analytics() {
                         <thead>
                             <tr>
                                 <th style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "left" }}>Split</th>
-                                {statColumns.map(([, label]) => (
-                                    <th key={label} style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "center" }}>
-                                        {label}
-                                    </th>
-                                ))}
+                    {statColumns.map(([key, label]) => (
+                        <th key={label} style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "center" }}>
+                            <span
+                                style={{ cursor: "pointer" }}
+                                onClick={() =>
+                                    toggleSort(
+                                        key as string,
+                                        teamSplitsAvgSortKey as string | null,
+                                        teamSplitsAvgSortDir,
+                                        (v) => setTeamSplitsAvgSortKey(v as StatColumnKey | null),
+                                        setTeamSplitsAvgSortDir,
+                                    )
+                                }
+                            >
+                                {label}
+                                {sortIndicator(key as string, teamSplitsAvgSortKey as string | null, teamSplitsAvgSortDir)}
+                            </span>
+                        </th>
+                    ))}
                             </tr>
                         </thead>
                         <tbody>
@@ -308,7 +448,7 @@ export default function Analytics() {
                                     Opponent
                                 </td>
                             </tr>
-                            {teamSplitsAverages.opponents.map((row) => (
+                            {sortSplitRows(teamSplitsAverages.opponents, teamSplitsAvgSortKey, teamSplitsAvgSortDir).map((row) => (
                                 <tr key={`opp-avg-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
@@ -323,19 +463,45 @@ export default function Analytics() {
                 </>
             )}
             
-            <h3 style={{ marginTop: 28}}>Player Totals & Averages</h3>
+            <h3 style={{ marginTop: 28 }}>Player Totals</h3>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
                 <thead>
                     <tr>
-                    {["Player", "GP", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TO", "FLS", "FG", "FGA", "FG%", "FG3", "FGA3", "3P%", "FT", "FTA", "FT%", "PM", "PTS/G", "REB/G", "AST/G"].map((h) => (
-                        <th key={h} style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: h === "Player" ? "left" : "center" }}>
-                            {h}
+                    {[
+                        ["Player", "name"],
+                        ["GP", "gp"],
+                        ["MIN", "total_minutes"],
+                        ["PTS", "total_points"],
+                        ["REB", "total_rebounds"],
+                        ["AST", "total_assists"],
+                        ["STL", "total_steals"],
+                        ["BLK", "total_blocks"],
+                        ["TO", "total_turnovers"],
+                        ["FLS", "total_fouls"],
+                        ["FG", "total_FG"],
+                        ["FGA", "total_FGA"],
+                        ["FG%", "FG_PCT"],
+                        ["FG3", "total_FG3"],
+                        ["FGA3", "total_FGA3"],
+                        ["3P%", "FG3_PCT"],
+                        ["FT", "total_FT"],
+                        ["FTA", "total_FTA"],
+                        ["FT%", "FT_PCT"],
+                        ["PM", "total_PM"],
+                    ].map(([label, key]) => (
+                        <th
+                            key={label}
+                            style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: label === "Player" ? "left" : "center", cursor: "pointer" }}
+                            onClick={() => toggleSort(key as string, playerTotalsSortKey, playerTotalsSortDir, setPlayerTotalsSortKey, setPlayerTotalsSortDir)}
+                        >
+                            {label}
+                            {sortIndicator(key as string, playerTotalsSortKey, playerTotalsSortDir)}
                         </th>
                     ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {players.map((p) => (
+                    {sortedPlayerTotals.map((p) => (
                         <tr key={p.player_id}>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
                                 <Link to={`/players/${p.player_id}`}>
@@ -362,9 +528,84 @@ export default function Analytics() {
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_FTA}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.total_FT, p.total_FTA)}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_PM}</td>
-                                <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_points}</td>
-                                <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_rebounds}</td>
-                                <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_assists}</td>
+                        </tr>
+                    ))}
+
+                    {players.length === 0 && (
+                        <tr>
+                            <td colSpan={20} style={{ padding: 12, color: "#666" }}>
+                                No analytics yet (add stat lines first).
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+
+            <h3 style={{ marginTop: 28 }}>Player Averages</h3>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
+                <thead>
+                    <tr>
+                    {[
+                        ["Player", "name"],
+                        ["GP", "gp"],
+                        ["MIN", "avg_minutes"],
+                        ["PTS", "avg_points"],
+                        ["REB", "avg_rebounds"],
+                        ["AST", "avg_assists"],
+                        ["STL", "avg_steals"],
+                        ["BLK", "avg_blocks"],
+                        ["TO", "avg_turnovers"],
+                        ["FLS", "avg_fouls"],
+                        ["FG", "avg_FG"],
+                        ["FGA", "avg_FGA"],
+                        ["FG%", "avg_FG_PCT"],
+                        ["FG3", "avg_FG3"],
+                        ["FGA3", "avg_FGA3"],
+                        ["3P%", "avg_FG3_PCT"],
+                        ["FT", "avg_FT"],
+                        ["FTA", "avg_FTA"],
+                        ["FT%", "avg_FT_PCT"],
+                        ["PM", "avg_PM"],
+                    ].map(([label, key]) => (
+                        <th
+                            key={label}
+                            style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: label === "Player" ? "left" : "center", cursor: "pointer" }}
+                            onClick={() => toggleSort(key as string, playerAvgSortKey, playerAvgSortDir, setPlayerAvgSortKey, setPlayerAvgSortDir)}
+                        >
+                            {label}
+                            {sortIndicator(key as string, playerAvgSortKey, playerAvgSortDir)}
+                        </th>
+                    ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {sortedPlayerAverages.map((p) => (
+                        <tr key={`${p.player_id}-avg`}>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>
+                                <Link to={`/players/${p.player_id}`}>
+                                    #{p.jersey_number} {p.name} <span style={{ color: "#666" }}>({p.position})</span>
+                                </Link>
+                            </td>
+
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.gp}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{formatMinutes(p.avg_minutes)}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_points}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_rebounds}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_assists}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_steals}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_blocks}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_turnovers}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_fouls}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FG}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FGA}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.avg_FG, p.avg_FGA)}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FG3}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FGA3}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.avg_FG3, p.avg_FGA3)}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FT}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FTA}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.avg_FT, p.avg_FTA)}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_PM}</td>
                         </tr>
                     ))}
 

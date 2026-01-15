@@ -13,8 +13,29 @@ def _row_to_dict(row, columns):
     if row is None:
         return None
     if isinstance(row, dict):
-        return row
-    return {columns[i]: row[i] for i in range(len(columns))}
+        data = row
+    else:
+        data = {columns[i]: row[i] for i in range(len(columns))}
+    return _normalize_stat_keys(data)
+
+
+def _normalize_stat_keys(data):
+    if data is None:
+        return None
+    mapping = {
+        "fg": "FG",
+        "fga": "FGA",
+        "fg3": "FG3",
+        "fga3": "FGA3",
+        "ft": "FT",
+        "fta": "FTA",
+        "pm": "PM",
+    }
+    out = dict(data)
+    for src, dest in mapping.items():
+        if src in out and dest not in out:
+            out[dest] = out.pop(src)
+    return out
 
 def create_statline(
     conn,

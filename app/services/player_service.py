@@ -67,3 +67,27 @@ def delete_player(conn, player_id):
     cursor.execute("DELETE FROM players WHERE id = %s", (player_id,))
     conn.commit()
     return cursor.rowcount > 0
+
+def update_player(conn, player_id, name=None, jersey_number=None, position=None):
+    updates = []
+    values = []
+
+    if name is not None:
+        updates.append("name = %s")
+        values.append(name)
+    if jersey_number is not None:
+        updates.append("jersey_number = %s")
+        values.append(jersey_number)
+    if position is not None:
+        updates.append("position = %s")
+        values.append(position)
+
+    if not updates:
+        return False
+
+    values.append(player_id)
+    query = f"UPDATE players SET {', '.join(updates)} WHERE id = %s"
+    cursor = conn.cursor()
+    cursor.execute(query, values)
+    conn.commit()
+    return cursor.rowcount > 0

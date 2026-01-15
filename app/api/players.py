@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.api.deps import get_db
-from app.api.models import PlayerCreate, PlayerOut
-from app.services.player_service import create_player, get_all_players, get_player_by_id, delete_player
+from app.api.models import PlayerCreate, PlayerOut, PlayerUpdate
+from app.services.player_service import create_player, get_all_players, get_player_by_id, delete_player, update_player
 from app.services.stat_service import delete_statlines_for_player, get_game_log_for_player
 from app.services.player_stats_service import (
     get_player_totals,
@@ -79,3 +79,16 @@ def remove_player(player_id: int, conn=Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="Player not found")
     return {"deleted": True}
+
+@router.patch("/{player_id}", response_model=dict, dependencies=[Depends(require_admin)])
+def edit_player(player_id: int, payload: PlayerUpdate, conn=Depends(get_db)):
+    updated = update_player(
+        conn,
+        player_id,
+        name=payload.name,
+        jersey_number=payload.jersey_number,
+        position=payload.position,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return {"updated": True}

@@ -63,6 +63,12 @@ export default function PlayerPage() {
     const [splitsTotals, setSplitsTotals] = useState<Splits | null>(null);
     const [splitsAverages, setSplitsAverages] = useState<Splits | null>(null);
     const [err, setErr] = useState<string | null>(null);
+    const [logSortKey, setLogSortKey] = useState<string | null>(null);
+    const [logSortDir, setLogSortDir] = useState<"desc" | "asc" | null>(null);
+    const [splitTotalsSortKey, setSplitTotalsSortKey] = useState<keyof StatTotals | "FG_PCT" | "FG3_PCT" | "FT_PCT" | null>(null);
+    const [splitTotalsSortDir, setSplitTotalsSortDir] = useState<"desc" | "asc" | null>(null);
+    const [splitAvgSortKey, setSplitAvgSortKey] = useState<keyof StatTotals | "FG_PCT" | "FG3_PCT" | "FT_PCT" | null>(null);
+    const [splitAvgSortDir, setSplitAvgSortDir] = useState<"desc" | "asc" | null>(null);
 
     type StatColumnKey = keyof StatTotals | "FG_PCT" | "FG3_PCT" | "FT_PCT";
     const statColumns: Array<[StatColumnKey, string]> = [
@@ -85,12 +91,35 @@ export default function PlayerPage() {
         ["FT_PCT", "FT%"],
         ["PM", "PM"],
     ];
+    const logColumns: Array<[string, string]> = [
+        ["Date", "date"],
+        ["Opp", "opponent"],
+        ["Loc", "location"],
+        ["MIN", "minutes"],
+        ["PTS", "points"],
+        ["REB", "rebounds"],
+        ["AST", "assists"],
+        ["STL", "steals"],
+        ["BLK", "blocks"],
+        ["TOV", "turnovers"],
+        ["FLS", "fouls"],
+        ["FG", "FG"],
+        ["FGA", "FGA"],
+        ["FG%", "FG_PCT"],
+        ["FG3", "FG3"],
+        ["FGA3", "FGA3"],
+        ["3P%", "FG3_PCT"],
+        ["FT", "FT"],
+        ["FTA", "FTA"],
+        ["FT%", "FT_PCT"],
+        ["PM", "PM"],
+    ];
 
     const pct = (made: number, attempts: number) =>
         attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
 
     const formatMinutes = (minutes: number) => {
-        const totalSeconds = Math.round(minutes * 60);
+        const totalSeconds = Math.floor(minutes * 60);
         const mins = Math.floor(totalSeconds / 60);
         const secs = totalSeconds % 60;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -102,6 +131,95 @@ export default function PlayerPage() {
         if (key === "FT_PCT") return pct(row.FT, row.FTA);
         if (key === "minutes") return formatMinutes(row.minutes);
         return row[key];
+    };
+
+    const toggleSort = (
+        key: string,
+        currentKey: string | null,
+        currentDir: "desc" | "asc" | null,
+        setKey: (v: string | null) => void,
+        setDir: (v: "desc" | "asc" | null) => void,
+    ) => {
+        if (currentKey !== key) {
+            setKey(key);
+            setDir("desc");
+            return;
+        }
+        if (currentDir === "desc") setDir("asc");
+        else if (currentDir === "asc") {
+            setKey(null);
+            setDir(null);
+        } else {
+            setDir("desc");
+        }
+    };
+
+    const sortIndicator = (key: string, currentKey: string | null, currentDir: "desc" | "asc" | null) => {
+        if (currentKey !== key || !currentDir) return "";
+        return currentDir === "asc" ? " ^" : " v";
+    };
+
+    const getLogValue = (row: StatLine, key: string) => {
+        switch (key) {
+            case "FG_PCT":
+                return row.FGA === 0 ? -1 : row.FG / row.FGA;
+            case "FG3_PCT":
+                return row.FGA3 === 0 ? -1 : row.FG3 / row.FGA3;
+            case "FT_PCT":
+                return row.FTA === 0 ? -1 : row.FT / row.FTA;
+            case "date":
+                return row.date;
+            case "opponent":
+                return row.opponent;
+            case "location":
+                return row.location;
+            default:
+                return (row as any)[key] ?? 0;
+        }
+    };
+
+    const sortedLog = useMemo(() => {
+        if (!logSortKey || !logSortDir) return log;
+        const sorted = [...log].sort((a, b) => {
+            const av = getLogValue(a, logSortKey);
+            const bv = getLogValue(b, logSortKey);
+            if (typeof av === "string" || typeof bv === "string") {
+                const cmp = String(av).localeCompare(String(bv));
+                return logSortDir === "desc" ? -cmp : cmp;
+            }
+            if (av === bv) return 0;
+            return logSortDir === "desc" ? bv - av : av - bv;
+        });
+        return sorted;
+    }, [log, logSortKey, logSortDir]);
+
+    const sortSplitRows = (
+        rows: SplitRow[],
+        key: keyof StatTotals | "FG_PCT" | "FG3_PCT" | "FT_PCT" | null,
+        dir: "desc" | "asc" | null,
+    ) => {
+        if (!key || !dir) return rows;
+        const sorted = [...rows].sort((a, b) => {
+            const av =
+                key === "FG_PCT"
+                    ? a.FGA === 0 ? -1 : a.FG / a.FGA
+                    : key === "FG3_PCT"
+                        ? a.FGA3 === 0 ? -1 : a.FG3 / a.FGA3
+                        : key === "FT_PCT"
+                            ? a.FTA === 0 ? -1 : a.FT / a.FTA
+                            : (a as any)[key];
+            const bv =
+                key === "FG_PCT"
+                    ? b.FGA === 0 ? -1 : b.FG / b.FGA
+                    : key === "FG3_PCT"
+                        ? b.FGA3 === 0 ? -1 : b.FG3 / b.FGA3
+                        : key === "FT_PCT"
+                            ? b.FTA === 0 ? -1 : b.FT / b.FTA
+                            : (b as any)[key];
+            if (av === bv) return 0;
+            return dir === "desc" ? bv - av : av - bv;
+        });
+        return sorted;
     };
 
     async function load() {
@@ -181,19 +299,21 @@ export default function PlayerPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 12 }}>
                 <thead>
                     <tr>
-                        {["Date", "Opp", "Loc", "MIN", "PTS", "REB", "AST", "STL", "BLK", "TOV", "FLS", "FG", "FGA", "FG%", "FG3", "FGA3", "3P%", "FT", "FTA", "FT%", "PM"].map((h) => (
+                        {logColumns.map(([label, key]) => (
                             <th
-                                key={h}
-                                style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: h === "Opp" ? "left" : "center" }}
+                                key={label}
+                                style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: label === "Opp" ? "left" : "center", cursor: "pointer" }}
+                                onClick={() => toggleSort(key, logSortKey, logSortDir, setLogSortKey, setLogSortDir)}
                             >
-                                {h}
+                                {label}
+                                {sortIndicator(key, logSortKey, logSortDir)}
                             </th>
                         ))}
                     </tr>
                 </thead>
 
                 <tbody>
-                    {log.map((r) => (
+                    {sortedLog.map((r) => (
                         <tr key={r.game_id}>
                             {/* Clicking date goes to box score */}
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
@@ -263,7 +383,7 @@ export default function PlayerPage() {
                         </tr>
                     ))}
 
-                    {log.length === 0 && (
+                    {sortedLog.length === 0 && (
                         <tr>
                             <td colSpan={21} style={{ padding: 12, color: "#666" }}>
                                 No games logged yet.
@@ -332,9 +452,23 @@ export default function PlayerPage() {
                         <thead>
                             <tr>
                                 <th style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "left" }}>Split</th>
-                                {statColumns.map(([, label]) => (
+                                {statColumns.map(([key, label]) => (
                                     <th key={label} style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "center" }}>
-                                        {label}
+                                        <span
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() =>
+                                                toggleSort(
+                                                    key as string,
+                                                    splitTotalsSortKey,
+                                                    splitTotalsSortDir,
+                                                    (v) => setSplitTotalsSortKey(v as any),
+                                                    setSplitTotalsSortDir,
+                                                )
+                                            }
+                                        >
+                                            {label}
+                                            {sortIndicator(key as string, splitTotalsSortKey, splitTotalsSortDir)}
+                                        </span>
                                     </th>
                                 ))}
                             </tr>
@@ -360,7 +494,7 @@ export default function PlayerPage() {
                                     Opponent
                                 </td>
                             </tr>
-                            {splitsTotals.opponents.map((row) => (
+                            {sortSplitRows(splitsTotals.opponents, splitTotalsSortKey, splitTotalsSortDir).map((row) => (
                                 <tr key={`opp-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
@@ -382,9 +516,23 @@ export default function PlayerPage() {
                         <thead>
                             <tr>
                                 <th style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "left" }}>Split</th>
-                                {statColumns.map(([, label]) => (
+                                {statColumns.map(([key, label]) => (
                                     <th key={label} style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "center" }}>
-                                        {label}
+                                        <span
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() =>
+                                                toggleSort(
+                                                    key as string,
+                                                    splitAvgSortKey,
+                                                    splitAvgSortDir,
+                                                    (v) => setSplitAvgSortKey(v as any),
+                                                    setSplitAvgSortDir,
+                                                )
+                                            }
+                                        >
+                                            {label}
+                                            {sortIndicator(key as string, splitAvgSortKey, splitAvgSortDir)}
+                                        </span>
                                     </th>
                                 ))}
                             </tr>
@@ -410,7 +558,7 @@ export default function PlayerPage() {
                                     Opponent
                                 </td>
                             </tr>
-                            {splitsAverages.opponents.map((row) => (
+                            {sortSplitRows(splitsAverages.opponents, splitAvgSortKey, splitAvgSortDir).map((row) => (
                                 <tr key={`opp-avg-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (

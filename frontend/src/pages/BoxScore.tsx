@@ -53,7 +53,7 @@ const toInt = (s: string) => (s.trim() === "" ? 0 : Number(s));
 const pct = (made: number, attempts: number) =>
     attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
 const formatMinutes = (minutes: number) => {
-    const totalSeconds = Math.round(minutes * 60);
+    const totalSeconds = Math.floor(minutes * 60);
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;

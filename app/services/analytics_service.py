@@ -52,7 +52,14 @@ def player_totals_and_averages(conn):
     )
     rows = cursor.fetchall()
     cols = [c[0] for c in cursor.description]
-    return [{cols[i]: r[i] if not isinstance(r, dict) else r[cols[i]] for i in range(len(cols))} if not isinstance(r, dict) else r for r in rows]
+    dict_rows = []
+    for r in rows:
+        if isinstance(r, dict):
+            data = r
+        else:
+            data = {cols[i]: r[i] for i in range(len(cols))}
+        dict_rows.append(_normalize_player_analytics_keys(data))
+    return dict_rows
 
 def leaders(conn, limit: int = 5):
     """
@@ -97,6 +104,43 @@ def leaders(conn, limit: int = 5):
         )
         rows = cursor.fetchall()
         cols = [c[0] for c in cursor.description]
-        out[metric] = [{cols[i]: r[i] if not isinstance(r, dict) else r[cols[i]] for i in range(len(cols))} if not isinstance(r, dict) else r for r in rows]
+        dict_rows = []
+        for r in rows:
+            if isinstance(r, dict):
+                data = r
+            else:
+                data = {cols[i]: r[i] for i in range(len(cols))}
+            dict_rows.append(_normalize_leader_keys(data))
+        out[metric] = dict_rows
 
     return out
+
+
+def _normalize_player_analytics_keys(data):
+    mapping = {
+        "total_fg": "total_FG",
+        "total_fga": "total_FGA",
+        "total_fg3": "total_FG3",
+        "total_fga3": "total_FGA3",
+        "total_ft": "total_FT",
+        "total_fta": "total_FTA",
+        "total_pm": "total_PM",
+        "avg_fg": "avg_FG",
+        "avg_fga": "avg_FGA",
+        "avg_fg3": "avg_FG3",
+        "avg_fga3": "avg_FGA3",
+        "avg_ft": "avg_FT",
+        "avg_fta": "avg_FTA",
+        "avg_pm": "avg_PM",
+    }
+    out = dict(data)
+    for src, dest in mapping.items():
+        if src in out and dest not in out:
+            out[dest] = out.pop(src)
+    return out
+
+
+def _normalize_leader_keys(data):
+    if "value" in data:
+        return data
+    return data
