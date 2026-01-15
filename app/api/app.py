@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 from fastapi import FastAPI
 from app.api.players import router as players_router
 from app.api.games import router as games_router
@@ -28,9 +29,12 @@ app.include_router(games_router)
 app.include_router(stats_router)
 app.include_router(analytics_router)
 app.include_router(auth_router)
+
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[o.strip() for o in cors_origins if o.strip()],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
