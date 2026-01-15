@@ -12,6 +12,7 @@ type PlayerAnalytics = {
     total_minutes: number;
     total_points: number;
     total_rebounds: number;
+    total_OREB: number;
     total_assists: number;
     total_steals: number;
     total_blocks: number;
@@ -28,6 +29,7 @@ type PlayerAnalytics = {
     avg_minutes: number;
     avg_points: number;
     avg_rebounds: number;
+    avg_OREB: number;
     avg_assists: number;
     avg_steals: number;
     avg_blocks: number;
@@ -43,12 +45,13 @@ type PlayerAnalytics = {
 };
 
 type LeaderRow = { player_id: number; name: string; jersey_number: number; value: number };
-type Leaders = { minutes: LeaderRow[]; points: LeaderRow[]; rebounds: LeaderRow[]; assists: LeaderRow[]; steals: LeaderRow[]; blocks: LeaderRow[]; turnovers: LeaderRow[]; fouls: LeaderRow[]; FG: LeaderRow[]; FGA: LeaderRow[]; FG3: LeaderRow[]; FGA3: LeaderRow[]; FT: LeaderRow[]; FTA: LeaderRow[]; PM: LeaderRow[]; }
+type Leaders = { minutes: LeaderRow[]; points: LeaderRow[]; rebounds: LeaderRow[]; OREB: LeaderRow[]; assists: LeaderRow[]; steals: LeaderRow[]; blocks: LeaderRow[]; turnovers: LeaderRow[]; fouls: LeaderRow[]; FG: LeaderRow[]; FGA: LeaderRow[]; FG3: LeaderRow[]; FGA3: LeaderRow[]; FT: LeaderRow[]; FTA: LeaderRow[]; PM: LeaderRow[]; }
 
 type TeamStats = {
     minutes: number;
     points: number;
     rebounds: number;
+    OREB: number;
     assists: number;
     steals: number;
     blocks: number;
@@ -88,6 +91,7 @@ export default function Analytics() {
         ["minutes", "MIN"],
         ["points", "PTS"],
         ["rebounds", "REB"],
+        ["OREB", "OREB"],
         ["assists", "AST"],
         ["steals", "STL"],
         ["blocks", "BLK"],
@@ -109,7 +113,7 @@ export default function Analytics() {
         attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
 
     const formatMinutes = (minutes: number) => {
-        const totalSeconds = Math.floor(minutes * 60);
+        const totalSeconds = Math.round(minutes * 60);
         const mins = Math.floor(totalSeconds / 60);
         const secs = totalSeconds % 60;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -265,9 +269,10 @@ export default function Analytics() {
             
             {leaders && (
                 <div style={{ display: "flex", gap: 24, marginTop: 16, flexWrap: "wrap" }}>
-                    <Leaderboard title="Minutes Leaders" rows={leaders.minutes} />
+                    <Leaderboard title="Minutes Leaders" rows={leaders.minutes} formatValue={formatMinutes} />
                     <Leaderboard title="Points Leaders" rows={leaders.points} />
                     <Leaderboard title="Rebounds Leaders" rows={leaders.rebounds} />
+                    <Leaderboard title="Offensive Rebounds Leaders" rows={leaders.OREB} />
                     <Leaderboard title="Assists Leaders" rows={leaders.assists} />
                     <Leaderboard title="Steals Leaders" rows={leaders.steals} />
                     <Leaderboard title="Blocks Leaders" rows={leaders.blocks} />
@@ -473,6 +478,7 @@ export default function Analytics() {
                         ["MIN", "total_minutes"],
                         ["PTS", "total_points"],
                         ["REB", "total_rebounds"],
+                        ["OREB", "total_OREB"],
                         ["AST", "total_assists"],
                         ["STL", "total_steals"],
                         ["BLK", "total_blocks"],
@@ -510,9 +516,10 @@ export default function Analytics() {
                                 </td>
 
                                 <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.gp}</td>
-                                <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_minutes}</td>
+                                <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{formatMinutes(p.total_minutes)}</td>
                                 <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_points}</td>
                                 <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_rebounds}</td>
+                                <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_OREB}</td>
                                 <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_assists}</td>
                                 <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_steals}</td>
                                 <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.total_blocks}</td>
@@ -533,7 +540,7 @@ export default function Analytics() {
 
                     {players.length === 0 && (
                         <tr>
-                            <td colSpan={20} style={{ padding: 12, color: "#666" }}>
+                            <td colSpan={21} style={{ padding: 12, color: "#666" }}>
                                 No analytics yet (add stat lines first).
                             </td>
                         </tr>
@@ -551,6 +558,7 @@ export default function Analytics() {
                         ["MIN", "avg_minutes"],
                         ["PTS", "avg_points"],
                         ["REB", "avg_rebounds"],
+                        ["OREB", "avg_OREB"],
                         ["AST", "avg_assists"],
                         ["STL", "avg_steals"],
                         ["BLK", "avg_blocks"],
@@ -591,6 +599,7 @@ export default function Analytics() {
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{formatMinutes(p.avg_minutes)}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_points}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_rebounds}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_OREB}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_assists}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_steals}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_blocks}</td>
@@ -611,7 +620,7 @@ export default function Analytics() {
 
                     {players.length === 0 && (
                         <tr>
-                            <td colSpan={20} style={{ padding: 12, color: "#666" }}>
+                            <td colSpan={21} style={{ padding: 12, color: "#666" }}>
                                 No analytics yet (add stat lines first).
                             </td>
                         </tr>
@@ -622,14 +631,14 @@ export default function Analytics() {
     );
 }
 
-function Leaderboard({ title, rows }: { title: string; rows: LeaderRow[] }) {
+function Leaderboard({ title, rows, formatValue }: { title: string; rows: LeaderRow[]; formatValue?: (value: number) => string }) {
     return (
         <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, minWidth: 240 }}>
             <h4 style={{ marginTop: 0 }}>{title}</h4>
             <ol style={{ margin: 0, paddingLeft: 18 }}>
                 {rows.map((r) => (
                     <li key={r.player_id} style={{ marginBottom: 6 }}>
-                        #{r.jersey_number} {r.name}: <strong>{r.value}</strong>
+                        #{r.jersey_number} {r.name}: <strong>{formatValue ? formatValue(r.value) : r.value}</strong>
                     </li>
                 ))}
             </ol>

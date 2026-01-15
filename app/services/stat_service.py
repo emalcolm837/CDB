@@ -23,6 +23,7 @@ def _normalize_stat_keys(data):
     if data is None:
         return None
     mapping = {
+        "oreb": "OREB",
         "fg": "FG",
         "fga": "FGA",
         "fg3": "FG3",
@@ -44,6 +45,7 @@ def create_statline(
     minutes=0,
     points=0,
     rebounds=0,
+    OREB=0,
     assists=0,
     steals=0,
     blocks=0,
@@ -68,12 +70,12 @@ def create_statline(
     cursor.execute(
         """
         INSERT INTO stat_line (
-            player_id, game_id, minutes, points, rebounds, assists,
+            player_id, game_id, minutes, points, rebounds, OREB, assists,
             steals, blocks, turnovers, fouls, FG, FGA, FG3, FGA3, FT, FTA, PM, starter)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
-        (player_id, game_id, minutes, points, rebounds, assists,
+        (player_id, game_id, minutes, points, rebounds, OREB, assists,
             steals, blocks, turnovers, fouls, FG, FGA, FG3, FGA3, FT, FTA, PM, starter)
     )
 
@@ -88,6 +90,7 @@ def update_statline(
     minutes=None,
     points=None,
     rebounds=None,
+    OREB=None,
     assists=None,
     steals=None,
     blocks=None,
@@ -129,6 +132,10 @@ def update_statline(
     if rebounds is not None:
         updates.append("rebounds = %s")
         values.append(rebounds)
+
+    if OREB is not None:
+        updates.append("OREB = %s")
+        values.append(OREB)
 
     if assists is not None:
         updates.append("assists = %s")
@@ -301,9 +308,10 @@ def upsert_statline(
     conn, 
     player_id: int, 
     game_id: int,
-    minutes: int = 0,
+    minutes: float = 0,
     points: int = 0,
     rebounds: int = 0,
+    OREB: int = 0,
     assists: int = 0,
     steals: int = 0,
     blocks: int = 0,
@@ -322,14 +330,15 @@ def upsert_statline(
     cursor.execute(
         """
         INSERT INTO stat_line (
-            player_id, game_id, minutes, points, rebounds, assists, steals, blocks, turnovers, fouls,
+            player_id, game_id, minutes, points, rebounds, OREB, assists, steals, blocks, turnovers, fouls,
             FG, FGA, FG3, FGA3, FT, FTA, PM, starter
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(player_id, game_id) DO UPDATE SET
             minutes=excluded.minutes,
             points=excluded.points,
             rebounds=excluded.rebounds,
+            OREB=excluded.OREB,
             assists=excluded.assists,
             steals=excluded.steals,
             blocks=excluded.blocks,
@@ -344,7 +353,7 @@ def upsert_statline(
             PM=excluded.PM,
             starter=excluded.starter
             """,
-            (player_id, game_id, minutes, points, rebounds, assists, steals, blocks, turnovers, fouls,
+            (player_id, game_id, minutes, points, rebounds, OREB, assists, steals, blocks, turnovers, fouls,
              FG, FGA, FG3, FGA3, FT, FTA, PM, starter),
     )
     conn.commit()
@@ -362,6 +371,7 @@ def get_game_log_for_player(conn, player_id: int):
             s.minutes AS minutes,
             s.points AS points,
             s.rebounds AS rebounds,
+            s.OREB AS OREB,
             s.assists AS assists,
             s.steals AS steals,
             s.blocks AS blocks,

@@ -10,6 +10,7 @@ type Statline = {
     minutes: number;
     points: number;
     rebounds: number;
+    OREB: number;
     assists: number;
     steals: number;
     blocks: number;
@@ -31,6 +32,7 @@ type RowInput = {
     minutes: string;
     points: string;
     rebounds: string;
+    OREB: string;
     assists: string;
     steals: string;
     blocks: string;
@@ -53,7 +55,7 @@ const toInt = (s: string) => (s.trim() === "" ? 0 : Number(s));
 const pct = (made: number, attempts: number) =>
     attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
 const formatMinutes = (minutes: number) => {
-    const totalSeconds = Math.floor(minutes * 60);
+    const totalSeconds = Math.round(minutes * 60);
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -121,6 +123,7 @@ export default function BoxScore() {
                 minutes: sl ? formatMinutes(sl.minutes) : "",
                 points: sl ? toStr(sl.points) : "",
                 rebounds: sl ? toStr(sl.rebounds) : "",
+                OREB: sl ? toStr(sl.OREB) : "",
                 assists: sl ? toStr(sl.assists) : "",
                 steals: sl ? toStr(sl.steals) : "",
                 blocks: sl ? toStr(sl.blocks) : "",
@@ -176,6 +179,7 @@ export default function BoxScore() {
             minutes: parseMinutes(row.minutes),
             points: toInt(row.points),
             rebounds: toInt(row.rebounds),
+            OREB: toInt(row.OREB),
             assists: toInt(row.assists),
             steals: toInt(row.steals),
             blocks: toInt(row.blocks),
@@ -240,6 +244,7 @@ export default function BoxScore() {
                 acc.minutes += s.minutes;
                 acc.points += s.points;
                 acc.rebounds += s.rebounds;
+                acc.OREB += s.OREB;
                 acc.assists += s.assists;
                 acc.steals += s.steals;
                 acc.blocks += s.blocks;
@@ -254,7 +259,7 @@ export default function BoxScore() {
                 acc.PM += s.PM;
                 return acc;
             },
-            { minutes: 0, points: 0, rebounds: 0, assists: 0, steals: 0, blocks: 0, turnovers: 0, fouls: 0, FG: 0, FGA: 0, FG3: 0, FGA3: 0, FT: 0, FTA: 0, PM: 0 }
+            { minutes: 0, points: 0, rebounds: 0, OREB: 0, assists: 0, steals: 0, blocks: 0, turnovers: 0, fouls: 0, FG: 0, FGA: 0, FG3: 0, FGA3: 0, FT: 0, FTA: 0, PM: 0 }
         );
     }, [statlines]);
 
@@ -286,6 +291,7 @@ export default function BoxScore() {
                             ["MIN", "minutes"],
                             ["PTS", "points"],
                             ["REB", "rebounds"],
+                            ["OREB", "OREB"],
                             ["AST", "assists"],
                             ["STL", "steals"],
                             ["BLK", "blocks"],
@@ -315,7 +321,7 @@ export default function BoxScore() {
                     {(["starters", "bench"] as const).map((group) => (
                         <Fragment key={group}>
                             <tr>
-                                <td colSpan={isAdmin ? 18 : 17} style={{ padding: 8, fontWeight: 700, background: "#f7f7f7" }}>
+                                <td colSpan={isAdmin ? 19 : 18} style={{ padding: 8, fontWeight: 700, background: "#f7f7f7" }}>
                                     {group === "starters" ? "Starters" : "Bench"}
                                 </td>
                             </tr>
@@ -351,6 +357,7 @@ export default function BoxScore() {
                                                 ["minutes", "MIN"],
                                                 ["points", "PTS"],
                                                 ["rebounds", "REB"],
+                                                ["OREB", "OREB"],
                                                 ["assists", "AST"],
                                                 ["steals", "STL"],
                                                 ["blocks", "BLK"],
@@ -394,6 +401,7 @@ export default function BoxScore() {
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{formatMinutes(teamTotals.minutes)}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.points}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.rebounds}</td>
+                        <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.OREB}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.assists}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.steals}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.blocks}</td>
@@ -405,7 +413,7 @@ export default function BoxScore() {
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.FGA3}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.FT}</td>
                         <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.FTA}</td>
-                        <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.PM}</td>
+                        <td style={{ textAlign: "center", padding: 8, borderTop: "2px solid #ccc", fontWeight: 700 }}>{teamTotals.PM / 5}</td>
                         {isAdmin && <td style={{ padding: 8, borderTop: "2px solid #ccc" }} />}
                     </tr>
                     <tr>

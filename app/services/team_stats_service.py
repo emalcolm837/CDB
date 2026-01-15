@@ -2,6 +2,7 @@ STAT_COLUMNS = [
     "minutes",
     "points",
     "rebounds",
+    "OREB",
     "assists",
     "steals",
     "blocks",
@@ -18,15 +19,24 @@ STAT_COLUMNS = [
 
 
 def _sum_select(prefix: str) -> str:
-    return ",\n            ".join(
-        [f"COALESCE(SUM({prefix}.{col}), 0) AS {col}" for col in STAT_COLUMNS]
-    )
+    parts = []
+    for col in STAT_COLUMNS:
+        if col == "PM":
+            parts.append(f"COALESCE(ROUND(SUM({prefix}.{col}) / 5.0, 2), 0) AS {col}")
+        else:
+            parts.append(f"COALESCE(SUM({prefix}.{col}), 0) AS {col}")
+    return ",\n            ".join(parts)
 
 
-def _avg_select(prefix: str) -> str:
-    return ",\n            ".join(
-        [f"COALESCE(ROUND(AVG({prefix}.{col}), 2), 0) AS {col}" for col in STAT_COLUMNS]
-    )
+def _avg_select(prefix: str, game_count_expr: str) -> str:
+    parts = []
+    for col in STAT_COLUMNS:
+        if col == "PM":
+            base = f"CASE WHEN {game_count_expr} = 0 THEN 0 ELSE (1.0 * SUM({prefix}.{col}) / 5.0) / {game_count_expr} END"
+        else:
+            base = f"CASE WHEN {game_count_expr} = 0 THEN 0 ELSE 1.0 * SUM({prefix}.{col}) / {game_count_expr} END"
+        parts.append(f"COALESCE(ROUND({base}, 2), 0) AS {col}")
+    return ",\n            ".join(parts)
 
 
 def _empty_stats() -> dict:
@@ -47,6 +57,7 @@ def _normalize_stat_keys(data):
     if data is None:
         return None
     mapping = {
+        "oreb": "OREB",
         "fg": "FG",
         "fga": "FGA",
         "fg3": "FG3",
@@ -81,7 +92,7 @@ def get_team_averages(conn) -> dict:
     cursor.execute(
         f"""
         SELECT
-            {_avg_select("s")}
+            {_avg_select("s", "COUNT(DISTINCT s.game_id)")}
         FROM stat_line s
         """
     )
@@ -146,6 +157,6 @@ def get_team_splits_totals(conn) -> dict:
 
 def get_team_splits_averages(conn) -> dict:
     return {
-        "location": _location_splits(conn, _avg_select("s")),
-        "opponents": _opponent_splits(conn, _avg_select("s")),
+        "location": _location_splits(conn, _avg_select("s", "COUNT(DISTINCT s.game_id)")),
+        "opponents": _opponent_splits(conn, _avg_select("s", "COUNT(DISTINCT s.game_id)")),
     }

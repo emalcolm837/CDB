@@ -2,6 +2,7 @@ STAT_COLUMNS = [
     "minutes",
     "points",
     "rebounds",
+    "OREB",
     "assists",
     "steals",
     "blocks",
@@ -47,6 +48,7 @@ def _normalize_stat_keys(data):
     if data is None:
         return None
     mapping = {
+        "oreb": "OREB",
         "fg": "FG",
         "fga": "FGA",
         "fg3": "FG3",

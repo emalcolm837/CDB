@@ -35,6 +35,7 @@ def analytics_leaders(conn=Depends(get_db), limit: int = 5):
         "minutes": [dict(r) for r in data["minutes"]],
         "points": [dict(r) for r in data["points"]],
         "rebounds": [dict(r) for r in data["rebounds"]],
+        "OREB": [dict(r) for r in data["OREB"]],
         "assists": [dict(r) for r in data["assists"]],
         "steals": [dict(r) for r in data["steals"]],
         "blocks": [dict(r) for r in data["blocks"]],

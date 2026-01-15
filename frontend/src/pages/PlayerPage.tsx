@@ -17,6 +17,7 @@ type StatLine = {
     minutes: number;
     points: number;
     rebounds: number;
+    OREB: number;
     assists: number;
     steals: number;
     blocks: number;
@@ -35,6 +36,7 @@ type StatTotals = {
     minutes: number;
     points: number;
     rebounds: number;
+    OREB: number;
     assists: number;
     steals: number;
     blocks: number;
@@ -75,6 +77,7 @@ export default function PlayerPage() {
         ["minutes", "MIN"],
         ["points", "PTS"],
         ["rebounds", "REB"],
+        ["OREB", "OREB"],
         ["assists", "AST"],
         ["steals", "STL"],
         ["blocks", "BLK"],
@@ -98,6 +101,7 @@ export default function PlayerPage() {
         ["MIN", "minutes"],
         ["PTS", "points"],
         ["REB", "rebounds"],
+        ["OREB", "OREB"],
         ["AST", "assists"],
         ["STL", "steals"],
         ["BLK", "blocks"],
@@ -119,7 +123,7 @@ export default function PlayerPage() {
         attempts === 0 ? "" : `${((made / attempts) * 100).toFixed(1)}%`;
 
     const formatMinutes = (minutes: number) => {
-        const totalSeconds = Math.floor(minutes * 60);
+        const totalSeconds = Math.round(minutes * 60);
         const mins = Math.floor(totalSeconds / 60);
         const secs = totalSeconds % 60;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -336,6 +340,9 @@ export default function PlayerPage() {
                                 {r.rebounds}
                             </td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center"}}>
+                                {r.OREB}
+                            </td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center"}}>
                                 {r.assists}
                             </td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center"}}>
@@ -385,7 +392,7 @@ export default function PlayerPage() {
 
                     {sortedLog.length === 0 && (
                         <tr>
-                            <td colSpan={21} style={{ padding: 12, color: "#666" }}>
+                            <td colSpan={logColumns.length} style={{ padding: 12, color: "#666" }}>
                                 No games logged yet.
                             </td>
                         </tr>

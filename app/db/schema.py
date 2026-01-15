@@ -30,6 +30,7 @@ def init_db(conn):
             minutes NUMERIC(6,3) DEFAULT 0,
             points INTEGER DEFAULT 0,
             rebounds INTEGER DEFAULT 0,
+            OREB INTEGER DEFAULT 0,
             assists INTEGER DEFAULT 0,
             steals INTEGER DEFAULT 0,
             blocks INTEGER DEFAULT 0,

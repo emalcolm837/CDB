@@ -37,9 +37,10 @@ class GameOut(BaseModel):
 class StatLineCreate(BaseModel):
     player_id: int
     game_id: int
-    minutes: int = 0
+    minutes: float = 0
     points: int = 0
     rebounds: int = 0
+    OREB: int = 0
     assists: int = 0
     steals: int = 0
     blocks: int = 0
@@ -55,9 +56,10 @@ class StatLineCreate(BaseModel):
     starter: int = 0
 
 class StatLineUpdate(BaseModel):
-    minutes: Optional[int] = None
+    minutes: Optional[float] = None
     points: Optional[int] = None
     rebounds: Optional[int] = None
+    OREB: Optional[int] = None
     assists: Optional[int] = None
     steals: Optional[int] = None
     blocks: Optional[int] = None
@@ -76,9 +78,10 @@ class StatLineOut(BaseModel):
     id: int
     player_id: int
     game_id: int
-    minutes: int = 0
+    minutes: float = 0
     points: int = 0
     rebounds: int = 0
+    OREB: int = 0
     assists: int = 0
     steals: int = 0
     blocks: int = 0
@@ -97,9 +100,10 @@ class StatLineOut(BaseModel):
 
 class PlayerTotalsOut(BaseModel):
     games_played: int
-    total_minutes: Optional[int] = None
+    total_minutes: Optional[float] = None
     total_points: Optional[int] = None
     total_rebounds: Optional[int] = None
+    total_OREB: Optional[int] = None
     total_assists: Optional[int] = None
     total_steals: Optional[int] = None
     total_blocks: Optional[int] = None
@@ -117,6 +121,7 @@ class PlayerAveragesOut(BaseModel):
     avg_minutes: Optional[float] = None
     avg_points: Optional[float] = None
     avg_rebounds: Optional[float] = None
+    avg_OREB: Optional[float] = None
     avg_assists: Optional[float] = None
     avg_steals: Optional[float] = None
     avg_blocks: Optional[float] = None

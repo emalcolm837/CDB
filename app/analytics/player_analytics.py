@@ -11,6 +11,7 @@ def get_player_totals(conn, player_id):
             SUM(minutes) AS total_minutes,
             SUM(points) AS total_points,
             SUM(rebounds) AS total_rebounds,
+            SUM(OREB) AS total_OREB,
             SUM(assists) AS total_assists,
             SUM(steals) AS total_steals,
             SUM(blocks) AS total_blocks,
@@ -33,9 +34,9 @@ def get_player_totals(conn, player_id):
     if row is None:
         return None
     if isinstance(row, dict):
-        return row
+        return _normalize_player_analytics_keys(row)
     cols = [c[0] for c in cursor.description]
-    return {cols[i]: row[i] for i in range(len(cols))}
+    return _normalize_player_analytics_keys({cols[i]: row[i] for i in range(len(cols))})
 
 def get_player_averages(conn, player_id):
     """
@@ -49,6 +50,7 @@ def get_player_averages(conn, player_id):
             AVG(minutes) AS avg_minutes,
             AVG(points) AS avg_points,
             AVG(rebounds) AS avg_rebounds,
+            AVG(OREB) AS avg_OREB,
             AVG(assists) AS avg_assists,
             AVG(steals) AS avg_steals,
             AVG(blocks) AS avg_blocks,
@@ -71,6 +73,18 @@ def get_player_averages(conn, player_id):
     if row is None:
         return None
     if isinstance(row, dict):
-        return row
+        return _normalize_player_analytics_keys(row)
     cols = [c[0] for c in cursor.description]
-    return {cols[i]: row[i] for i in range(len(cols))}
+    return _normalize_player_analytics_keys({cols[i]: row[i] for i in range(len(cols))})
+
+
+def _normalize_player_analytics_keys(data):
+    mapping = {
+        "total_oreb": "total_OREB",
+        "avg_oreb": "avg_OREB",
+    }
+    out = dict(data)
+    for src, dest in mapping.items():
+        if src in out and dest not in out:
+            out[dest] = out.pop(src)
+    return out

@@ -57,6 +57,7 @@ def migrate_stat_line_add_shooting_columns(conn):
     """
     cursor = conn.cursor()
     columns = [
+        "OREB",
         "FG",
         "FGA",
         "FG3",

@@ -15,6 +15,7 @@ def player_totals_and_averages(conn):
             COALESCE(SUM(sl.minutes), 0) AS total_minutes,
             COALESCE(SUM(sl.points), 0) AS total_points,
             COALESCE(SUM(sl.rebounds), 0) AS total_rebounds,
+            COALESCE(SUM(sl.OREB), 0) AS total_OREB,
             COALESCE(SUM(sl.assists), 0) AS total_assists,
             COALESCE(SUM(sl.steals), 0) AS total_steals,
             COALESCE(SUM(sl.blocks), 0) AS total_blocks,
@@ -31,6 +32,7 @@ def player_totals_and_averages(conn):
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.minutes) / COUNT(sl.game_id), 2) END AS avg_minutes,
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.points) / COUNT(sl.game_id), 2) END AS avg_points,
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.rebounds) / COUNT(sl.game_id), 2) END AS avg_rebounds,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.OREB) / COUNT(sl.game_id), 2) END AS avg_OREB,
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.assists) / COUNT(sl.game_id), 2) END AS avg_assists,
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.steals) / COUNT(sl.game_id), 2) END AS avg_steals,
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.blocks) / COUNT(sl.game_id), 2) END AS avg_blocks,
@@ -71,6 +73,7 @@ def leaders(conn, limit: int = 5):
         "minutes" : "minutes",
         "points" : "points",
         "rebounds" : "rebounds",
+        "OREB" : "OREB",
         "assists" : "assists",
         "steals" : "steals",
         "blocks" : "blocks",
@@ -125,6 +128,7 @@ def _normalize_player_analytics_keys(data):
         "total_ft": "total_FT",
         "total_fta": "total_FTA",
         "total_pm": "total_PM",
+        "total_oreb": "total_OREB",
         "avg_fg": "avg_FG",
         "avg_fga": "avg_FGA",
         "avg_fg3": "avg_FG3",
@@ -132,6 +136,7 @@ def _normalize_player_analytics_keys(data):
         "avg_ft": "avg_FT",
         "avg_fta": "avg_FTA",
         "avg_pm": "avg_PM",
+        "avg_oreb": "avg_OREB",
     }
     out = dict(data)
     for src, dest in mapping.items():
