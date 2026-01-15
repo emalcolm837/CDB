@@ -8,6 +8,14 @@ def _row_id(row):
         return row.get("id")
     return row[0]
 
+
+def _row_to_dict(row, columns):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    return {columns[i]: row[i] for i in range(len(columns))}
+
 def create_player(conn, name, jersey_number=None, position=None):
     """
     Inserts a new player into the database.
@@ -35,7 +43,9 @@ def get_all_players(conn):
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM players")
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    cols = [c[0] for c in cursor.description]
+    return [_row_to_dict(r, cols) for r in rows]
 
 def get_player_by_id(conn, player_id):
     """
@@ -48,7 +58,9 @@ def get_player_by_id(conn, player_id):
         (player_id,)
     )
 
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    cols = [c[0] for c in cursor.description]
+    return _row_to_dict(row, cols)
 
 def delete_player(conn, player_id):
     cursor = conn.cursor()

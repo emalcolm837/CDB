@@ -29,7 +29,13 @@ def get_player_totals(conn, player_id):
         (player_id,)
     )
 
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    cols = [c[0] for c in cursor.description]
+    return {cols[i]: row[i] for i in range(len(cols))}
 
 def get_player_averages(conn, player_id):
     """
@@ -61,4 +67,10 @@ def get_player_averages(conn, player_id):
         (player_id,)
     )
 
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    cols = [c[0] for c in cursor.description]
+    return {cols[i]: row[i] for i in range(len(cols))}

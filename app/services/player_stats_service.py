@@ -33,6 +33,14 @@ def _empty_stats() -> dict:
     return {col: 0 for col in STAT_COLUMNS}
 
 
+def _row_to_dict(row, columns):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    return {columns[i]: row[i] for i in range(len(columns))}
+
+
 def get_player_totals(conn, player_id: int) -> dict:
     cursor = conn.cursor()
     cursor.execute(
@@ -45,7 +53,8 @@ def get_player_totals(conn, player_id: int) -> dict:
         (player_id,),
     )
     row = cursor.fetchone()
-    return dict(row) if row is not None else _empty_stats()
+    cols = [c[0] for c in cursor.description]
+    return _row_to_dict(row, cols) if row is not None else _empty_stats()
 
 
 def get_player_averages(conn, player_id: int) -> dict:
@@ -60,7 +69,8 @@ def get_player_averages(conn, player_id: int) -> dict:
         (player_id,),
     )
     row = cursor.fetchone()
-    return dict(row) if row is not None else _empty_stats()
+    cols = [c[0] for c in cursor.description]
+    return _row_to_dict(row, cols) if row is not None else _empty_stats()
 
 
 def _location_splits(conn, player_id: int, agg_select: str) -> list[dict]:
@@ -79,7 +89,9 @@ def _location_splits(conn, player_id: int, agg_select: str) -> list[dict]:
         (player_id,),
     )
     rows = cursor.fetchall()
-    by_label = {r["label"]: dict(r) for r in rows if r["label"] in ("Home", "Away")}
+    cols = [c[0] for c in cursor.description]
+    dict_rows = [_row_to_dict(r, cols) for r in rows]
+    by_label = {r["label"]: r for r in dict_rows if r["label"] in ("Home", "Away")}
 
     out = []
     for label in ("Home", "Away"):
@@ -107,7 +119,9 @@ def _opponent_splits(conn, player_id: int, agg_select: str) -> list[dict]:
         (player_id,),
     )
     rows = cursor.fetchall()
-    return [dict(r) for r in rows if r["label"] is not None]
+    cols = [c[0] for c in cursor.description]
+    dict_rows = [_row_to_dict(r, cols) for r in rows]
+    return [r for r in dict_rows if r["label"] is not None]
 
 
 def get_player_splits_totals(conn, player_id: int) -> dict:

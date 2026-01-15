@@ -33,6 +33,14 @@ def _empty_stats() -> dict:
     return {col: 0 for col in STAT_COLUMNS}
 
 
+def _row_to_dict(row, columns):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    return {columns[i]: row[i] for i in range(len(columns))}
+
+
 def get_team_totals(conn) -> dict:
     cursor = conn.cursor()
     cursor.execute(
@@ -43,7 +51,8 @@ def get_team_totals(conn) -> dict:
         """
     )
     row = cursor.fetchone()
-    return dict(row) if row is not None else _empty_stats()
+    cols = [c[0] for c in cursor.description]
+    return _row_to_dict(row, cols) if row is not None else _empty_stats()
 
 
 def get_team_averages(conn) -> dict:
@@ -56,7 +65,8 @@ def get_team_averages(conn) -> dict:
         """
     )
     row = cursor.fetchone()
-    return dict(row) if row is not None else _empty_stats()
+    cols = [c[0] for c in cursor.description]
+    return _row_to_dict(row, cols) if row is not None else _empty_stats()
 
 
 def _location_splits(conn, agg_select: str) -> list[dict]:
@@ -73,7 +83,9 @@ def _location_splits(conn, agg_select: str) -> list[dict]:
         """,
     )
     rows = cursor.fetchall()
-    by_label = {r["label"]: dict(r) for r in rows if r["label"] in ("Home", "Away")}
+    cols = [c[0] for c in cursor.description]
+    dict_rows = [_row_to_dict(r, cols) for r in rows]
+    by_label = {r["label"]: r for r in dict_rows if r["label"] in ("Home", "Away")}
 
     out = []
     for label in ("Home", "Away"):
@@ -99,7 +111,9 @@ def _opponent_splits(conn, agg_select: str) -> list[dict]:
         """,
     )
     rows = cursor.fetchall()
-    return [dict(r) for r in rows if r["label"] is not None]
+    cols = [c[0] for c in cursor.description]
+    dict_rows = [_row_to_dict(r, cols) for r in rows]
+    return [r for r in dict_rows if r["label"] is not None]
 
 
 def get_team_splits_totals(conn) -> dict:

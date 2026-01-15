@@ -10,6 +10,14 @@ def _row_id(row):
         return row.get("id")
     return row[0]
 
+
+def _row_to_dict(row, columns):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    return {columns[i]: row[i] for i in range(len(columns))}
+
 def create_game(conn, date, opponent, location=None):
     """
     Imserts a new game into the database.
@@ -40,7 +48,9 @@ def get_all_games(conn):
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM games")
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    cols = [c[0] for c in cursor.description]
+    return [_row_to_dict(r, cols) for r in rows]
 
 def get_game_by_id(conn, game_id):
     """
@@ -53,7 +63,9 @@ def get_game_by_id(conn, game_id):
         (game_id,)
     )
 
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    cols = [c[0] for c in cursor.description]
+    return _row_to_dict(row, cols)
 
 def delete_game(conn, game_id):
     cursor = conn.cursor()

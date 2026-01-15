@@ -34,7 +34,18 @@ def create_user(conn, username: str, password: str, role: str) -> int:
 def get_user_by_username(conn, username: str):
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    return {
+        "id": row[0],
+        "username": row[1],
+        "password_hash": row[2],
+        "role": row[3],
+        "created_at": row[4],
+    }
 
 def authenticate_user(conn, username: str, password: str):
     user = get_user_by_username(conn, username)

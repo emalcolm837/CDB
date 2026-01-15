@@ -14,6 +14,13 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=6, max_length=200)
     role: str = "viewer"
 
+def _row_field(row, field: str, index: int):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row.get(field)
+    return row[index]
+
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/token")
@@ -22,7 +29,9 @@ def login(form: OAuth2PasswordRequestForm = Depends(), conn=Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     
-    token = create_access_token({"sub": user["username"], "role": user["role"]})
+    token = create_access_token(
+        {"sub": _row_field(user, "username", 1), "role": _row_field(user, "role", 3)}
+    )
     return {"access_token": token, "token_type": "bearer"}
 
 @router.post("/users")

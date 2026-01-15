@@ -8,6 +8,14 @@ def _row_id(row):
         return row.get("id")
     return row[0]
 
+
+def _row_to_dict(row, columns):
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    return {columns[i]: row[i] for i in range(len(columns))}
+
 def create_statline(
     conn,
     player_id,
@@ -184,7 +192,9 @@ def all_player_statlines(conn, player_id):
         (player_id,)
     )
 
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    cols = [c[0] for c in cursor.description]
+    return [_row_to_dict(r, cols) for r in rows]
 
 def player_stats_for_game(conn, player_id, game_id):
     """
@@ -202,7 +212,9 @@ def player_stats_for_game(conn, player_id, game_id):
         (player_id, game_id)
     )
 
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    cols = [c[0] for c in cursor.description]
+    return _row_to_dict(row, cols)
 
 def get_stats_for_game(conn, game_id):
     """
@@ -217,7 +229,9 @@ def get_stats_for_game(conn, game_id):
         (game_id,)
     )    
 
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    cols = [c[0] for c in cursor.description]
+    return [_row_to_dict(r, cols) for r in rows]
 
 def get_statlines_for_game(conn, game_id: int):
     cursor = conn.cursor()
@@ -225,7 +239,9 @@ def get_statlines_for_game(conn, game_id: int):
         "SELECT * FROM stat_line WHERE game_id = %s ORDER BY player_id",
         (game_id,),
     )
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    cols = [c[0] for c in cursor.description]
+    return [_row_to_dict(r, cols) for r in rows]
 
 def delete_statline(conn, player_id, game_id):
     cursor = conn.cursor()
@@ -344,5 +360,7 @@ def get_game_log_for_player(conn, player_id: int):
         """,
         (player_id,),
     )
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    cols = [c[0] for c in cursor.description]
+    return [_row_to_dict(r, cols) for r in rows]
     

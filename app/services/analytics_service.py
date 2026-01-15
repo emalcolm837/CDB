@@ -50,7 +50,9 @@ def player_totals_and_averages(conn):
         ORDER BY total_points DESC, avg_points DESC
         """
     )
-    return cursor.fetchall()
+    rows = cursor.fetchall()
+    cols = [c[0] for c in cursor.description]
+    return [{cols[i]: r[i] if not isinstance(r, dict) else r[cols[i]] for i in range(len(cols))} if not isinstance(r, dict) else r for r in rows]
 
 def leaders(conn, limit: int = 5):
     """
@@ -93,6 +95,8 @@ def leaders(conn, limit: int = 5):
             """,
             (limit,),
         )
-        out[metric] = cursor.fetchall()
+        rows = cursor.fetchall()
+        cols = [c[0] for c in cursor.description]
+        out[metric] = [{cols[i]: r[i] if not isinstance(r, dict) else r[cols[i]] for i in range(len(cols))} if not isinstance(r, dict) else r for r in rows]
 
     return out
