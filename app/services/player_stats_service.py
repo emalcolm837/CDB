@@ -25,9 +25,11 @@ def _sum_select(prefix: str) -> str:
 
 
 def _avg_select(prefix: str) -> str:
-    return ",\n            ".join(
-        [f"COALESCE(ROUND(AVG({prefix}.{col}), 2), 0) AS {col}" for col in STAT_COLUMNS]
-    )
+    parts = []
+    for col in STAT_COLUMNS:
+        precision = 2 if col == "minutes" else 1
+        parts.append(f"COALESCE(ROUND(AVG({prefix}.{col}), {precision}), 0) AS {col}")
+    return ",\n            ".join(parts)
 
 
 def _empty_stats() -> dict:

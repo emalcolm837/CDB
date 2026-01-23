@@ -30,21 +30,21 @@ def player_totals_and_averages(conn):
             COALESCE(SUM(sl.PM), 0) AS total_PM,
 
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.minutes) / COUNT(sl.game_id), 2) END AS avg_minutes,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.points) / COUNT(sl.game_id), 2) END AS avg_points,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.rebounds) / COUNT(sl.game_id), 2) END AS avg_rebounds,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.OREB) / COUNT(sl.game_id), 2) END AS avg_OREB,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.assists) / COUNT(sl.game_id), 2) END AS avg_assists,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.steals) / COUNT(sl.game_id), 2) END AS avg_steals,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.blocks) / COUNT(sl.game_id), 2) END AS avg_blocks,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.turnovers) / COUNT(sl.game_id), 2) END AS avg_turnovers,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.fouls) / COUNT(sl.game_id), 2) END AS avg_fouls,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FG) / COUNT(sl.game_id), 2) END AS avg_FG,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FGA) / COUNT(sl.game_id), 2) END AS avg_FGA,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FG3) / COUNT(sl.game_id), 2) END AS avg_FG3,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FGA3) / COUNT(sl.game_id), 2) END AS avg_FGA3,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FT) / COUNT(sl.game_id), 2) END AS avg_FT,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FTA) / COUNT(sl.game_id), 2) END AS avg_FTA,
-            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.PM) / COUNT(sl.game_id), 2) END AS avg_PM
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.points) / COUNT(sl.game_id), 1) END AS avg_points,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.rebounds) / COUNT(sl.game_id), 1) END AS avg_rebounds,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.OREB) / COUNT(sl.game_id), 1) END AS avg_OREB,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.assists) / COUNT(sl.game_id), 1) END AS avg_assists,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.steals) / COUNT(sl.game_id), 1) END AS avg_steals,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.blocks) / COUNT(sl.game_id), 1) END AS avg_blocks,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.turnovers) / COUNT(sl.game_id), 1) END AS avg_turnovers,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.fouls) / COUNT(sl.game_id), 1) END AS avg_fouls,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FG) / COUNT(sl.game_id), 1) END AS avg_FG,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FGA) / COUNT(sl.game_id), 1) END AS avg_FGA,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FG3) / COUNT(sl.game_id), 1) END AS avg_FG3,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FGA3) / COUNT(sl.game_id), 1) END AS avg_FGA3,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FT) / COUNT(sl.game_id), 1) END AS avg_FT,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.FTA) / COUNT(sl.game_id), 1) END AS avg_FTA,
+            CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.PM) / COUNT(sl.game_id), 1) END AS avg_PM
 
         FROM players p
         LEFT JOIN stat_line sl ON sl.player_id = p.id

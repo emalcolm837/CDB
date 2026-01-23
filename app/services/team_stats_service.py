@@ -35,7 +35,8 @@ def _avg_select(prefix: str, game_count_expr: str) -> str:
             base = f"CASE WHEN {game_count_expr} = 0 THEN 0 ELSE (1.0 * SUM({prefix}.{col}) / 5.0) / {game_count_expr} END"
         else:
             base = f"CASE WHEN {game_count_expr} = 0 THEN 0 ELSE 1.0 * SUM({prefix}.{col}) / {game_count_expr} END"
-        parts.append(f"COALESCE(ROUND({base}, 2), 0) AS {col}")
+        precision = 2 if col == "minutes" else 1
+        parts.append(f"COALESCE(ROUND({base}, {precision}), 0) AS {col}")
     return ",\n            ".join(parts)
 
 
