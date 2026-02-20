@@ -119,10 +119,11 @@ export default function Analytics() {
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const renderStatCell = (row: TeamStats, key: StatColumnKey) => {
-        if (key === "FG_PCT") return pct(row.FG, row.FGA);
-        if (key === "FG3_PCT") return pct(row.FG3, row.FGA3);
-        if (key === "FT_PCT") return pct(row.FT, row.FTA);
+    const renderStatCell = (row: TeamStats, key: StatColumnKey, pctSource?: TeamStats) => {
+        const source = pctSource ?? row;
+        if (key === "FG_PCT") return pct(source.FG, source.FGA);
+        if (key === "FG3_PCT") return pct(source.FG3, source.FGA3);
+        if (key === "FT_PCT") return pct(source.FT, source.FTA);
         if (key === "minutes") return formatMinutes(row.minutes);
         return row[key];
     };
@@ -162,11 +163,11 @@ export default function Analytics() {
             case "FT_PCT":
                 return p.total_FTA === 0 ? -1 : p.total_FT / p.total_FTA;
             case "avg_FG_PCT":
-                return p.avg_FGA === 0 ? -1 : p.avg_FG / p.avg_FGA;
+                return p.total_FGA === 0 ? -1 : p.total_FG / p.total_FGA;
             case "avg_FG3_PCT":
-                return p.avg_FGA3 === 0 ? -1 : p.avg_FG3 / p.avg_FGA3;
+                return p.total_FGA3 === 0 ? -1 : p.total_FG3 / p.total_FGA3;
             case "avg_FT_PCT":
-                return p.avg_FTA === 0 ? -1 : p.avg_FT / p.avg_FTA;
+                return p.total_FTA === 0 ? -1 : p.total_FT / p.total_FTA;
             default:
                 return (p as any)[key] ?? 0;
         }
@@ -206,24 +207,27 @@ export default function Analytics() {
         rows: SplitRow[],
         key: StatColumnKey | null,
         dir: "desc" | "asc" | null,
+        pctSourceByLabel?: Record<string, TeamStats>,
     ) => {
         if (!key || !dir) return rows;
         const sorted = [...rows].sort((a, b) => {
+            const aSource = pctSourceByLabel?.[a.label] ?? a;
+            const bSource = pctSourceByLabel?.[b.label] ?? b;
             const av =
                 key === "FG_PCT"
-                    ? a.FGA === 0 ? -1 : a.FG / a.FGA
+                    ? aSource.FGA === 0 ? -1 : aSource.FG / aSource.FGA
                     : key === "FG3_PCT"
-                        ? a.FGA3 === 0 ? -1 : a.FG3 / a.FGA3
+                        ? aSource.FGA3 === 0 ? -1 : aSource.FG3 / aSource.FGA3
                         : key === "FT_PCT"
-                            ? a.FTA === 0 ? -1 : a.FT / a.FTA
+                            ? aSource.FTA === 0 ? -1 : aSource.FT / aSource.FTA
                             : (a as any)[key];
             const bv =
                 key === "FG_PCT"
-                    ? b.FGA === 0 ? -1 : b.FG / b.FGA
+                    ? bSource.FGA === 0 ? -1 : bSource.FG / bSource.FGA
                     : key === "FG3_PCT"
-                        ? b.FGA3 === 0 ? -1 : b.FG3 / b.FGA3
+                        ? bSource.FGA3 === 0 ? -1 : bSource.FG3 / bSource.FGA3
                         : key === "FT_PCT"
-                            ? b.FTA === 0 ? -1 : b.FT / b.FTA
+                            ? bSource.FTA === 0 ? -1 : bSource.FT / bSource.FTA
                             : (b as any)[key];
             if (av === bv) return 0;
             return dir === "desc" ? bv - av : av - bv;
@@ -345,7 +349,7 @@ export default function Analytics() {
                             <tr>
                                 {statColumns.map(([key]) => (
                                     <td key={key} style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                        {renderStatCell(teamAverages, key)}
+                                        {renderStatCell(teamAverages, key, teamTotals ?? teamAverages)}
                                     </td>
                                 ))}
                             </tr>
@@ -438,27 +442,41 @@ export default function Analytics() {
                                     Location
                                 </td>
                             </tr>
-                            {teamSplitsAverages.location.map((row) => (
+                            {teamSplitsAverages.location.map((row) => {
+                                const pctSource = teamSplitsTotals?.location.find((r) => r.label === row.label);
+                                return (
                                 <tr key={`loc-avg-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
                                         <td key={key} style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                            {renderStatCell(row, key)}
+                                            {renderStatCell(row, key, pctSource ?? row)}
                                         </td>
                                     ))}
                                 </tr>
-                            ))}
+                                );
+                            })}
                             <tr>
                                 <td colSpan={statColumns.length + 1} style={{ padding: 8, fontWeight: 700, background: "#f7f7f7" }}>
                                     Opponent
                                 </td>
                             </tr>
-                            {sortSplitRows(teamSplitsAverages.opponents, teamSplitsAvgSortKey, teamSplitsAvgSortDir).map((row) => (
+                            {sortSplitRows(
+                                teamSplitsAverages.opponents,
+                                teamSplitsAvgSortKey,
+                                teamSplitsAvgSortDir,
+                                teamSplitsTotals
+                                    ? Object.fromEntries(teamSplitsTotals.opponents.map((r) => [r.label, r]))
+                                    : undefined,
+                            ).map((row) => (
                                 <tr key={`opp-avg-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
                                         <td key={key} style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                            {renderStatCell(row, key)}
+                                            {renderStatCell(
+                                                row,
+                                                key,
+                                                teamSplitsTotals?.opponents.find((r) => r.label === row.label) ?? row,
+                                            )}
                                         </td>
                                     ))}
                                 </tr>
@@ -607,13 +625,13 @@ export default function Analytics() {
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_fouls}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FG}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FGA}</td>
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.avg_FG, p.avg_FGA)}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.total_FG, p.total_FGA)}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FG3}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FGA3}</td>
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.avg_FG3, p.avg_FGA3)}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.total_FG3, p.total_FGA3)}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FT}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_FTA}</td>
-                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.avg_FT, p.avg_FTA)}</td>
+                            <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{pct(p.total_FT, p.total_FTA)}</td>
                             <td style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>{p.avg_PM}</td>
                         </tr>
                     ))}

@@ -129,10 +129,11 @@ export default function PlayerPage() {
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const renderStatCell = (row: StatTotals, key: StatColumnKey) => {
-        if (key === "FG_PCT") return pct(row.FG, row.FGA);
-        if (key === "FG3_PCT") return pct(row.FG3, row.FGA3);
-        if (key === "FT_PCT") return pct(row.FT, row.FTA);
+    const renderStatCell = (row: StatTotals, key: StatColumnKey, pctSource?: StatTotals) => {
+        const source = pctSource ?? row;
+        if (key === "FG_PCT") return pct(source.FG, source.FGA);
+        if (key === "FG3_PCT") return pct(source.FG3, source.FGA3);
+        if (key === "FT_PCT") return pct(source.FT, source.FTA);
         if (key === "minutes") return formatMinutes(row.minutes);
         return row[key];
     };
@@ -201,24 +202,27 @@ export default function PlayerPage() {
         rows: SplitRow[],
         key: keyof StatTotals | "FG_PCT" | "FG3_PCT" | "FT_PCT" | null,
         dir: "desc" | "asc" | null,
+        pctSourceByLabel?: Record<string, StatTotals>,
     ) => {
         if (!key || !dir) return rows;
         const sorted = [...rows].sort((a, b) => {
+            const aSource = pctSourceByLabel?.[a.label] ?? a;
+            const bSource = pctSourceByLabel?.[b.label] ?? b;
             const av =
                 key === "FG_PCT"
-                    ? a.FGA === 0 ? -1 : a.FG / a.FGA
+                    ? aSource.FGA === 0 ? -1 : aSource.FG / aSource.FGA
                     : key === "FG3_PCT"
-                        ? a.FGA3 === 0 ? -1 : a.FG3 / a.FGA3
+                        ? aSource.FGA3 === 0 ? -1 : aSource.FG3 / aSource.FGA3
                         : key === "FT_PCT"
-                            ? a.FTA === 0 ? -1 : a.FT / a.FTA
+                            ? aSource.FTA === 0 ? -1 : aSource.FT / aSource.FTA
                             : (a as any)[key];
             const bv =
                 key === "FG_PCT"
-                    ? b.FGA === 0 ? -1 : b.FG / b.FGA
+                    ? bSource.FGA === 0 ? -1 : bSource.FG / bSource.FGA
                     : key === "FG3_PCT"
-                        ? b.FGA3 === 0 ? -1 : b.FG3 / b.FGA3
+                        ? bSource.FGA3 === 0 ? -1 : bSource.FG3 / bSource.FGA3
                         : key === "FT_PCT"
-                            ? b.FTA === 0 ? -1 : b.FT / b.FTA
+                            ? bSource.FTA === 0 ? -1 : bSource.FT / bSource.FTA
                             : (b as any)[key];
             if (av === bv) return 0;
             return dir === "desc" ? bv - av : av - bv;
@@ -443,7 +447,7 @@ export default function PlayerPage() {
                             <tr>
                                 {statColumns.map(([key]) => (
                                     <td key={key} style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                        {renderStatCell(averages, key)}
+                                        {renderStatCell(averages, key, totals ?? averages)}
                                     </td>
                                 ))}
                             </tr>
@@ -550,27 +554,39 @@ export default function PlayerPage() {
                                     Location
                                 </td>
                             </tr>
-                            {splitsAverages.location.map((row) => (
+                            {splitsAverages.location.map((row) => {
+                                const pctSource = splitsTotals?.location.find((r) => r.label === row.label);
+                                return (
                                 <tr key={`loc-avg-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
                                         <td key={key} style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                            {renderStatCell(row, key)}
+                                            {renderStatCell(row, key, pctSource ?? row)}
                                         </td>
                                     ))}
                                 </tr>
-                            ))}
+                                );
+                            })}
                             <tr>
                                 <td colSpan={statColumns.length + 1} style={{ padding: 8, fontWeight: 700, background: "#f7f7f7" }}>
                                     Opponent
                                 </td>
                             </tr>
-                    {sortSplitRows(splitsAverages.opponents, splitAvgSortKey, splitAvgSortDir).map((row: SplitRow) => (
+                    {sortSplitRows(
+                        splitsAverages.opponents,
+                        splitAvgSortKey,
+                        splitAvgSortDir,
+                        splitsTotals ? Object.fromEntries(splitsTotals.opponents.map((r) => [r.label, r])) : undefined,
+                    ).map((row: SplitRow) => (
                                 <tr key={`opp-avg-${row.label}`}>
                                     <td style={{ padding: 8, borderBottom: "1px solid #eee" }}>{row.label}</td>
                                     {statColumns.map(([key]) => (
                                         <td key={key} style={{ padding: 8, borderBottom: "1px solid #eee", textAlign: "center" }}>
-                                            {renderStatCell(row, key)}
+                                            {renderStatCell(
+                                                row,
+                                                key,
+                                                splitsTotals?.opponents.find((r) => r.label === row.label) ?? row,
+                                            )}
                                         </td>
                                     ))}
                                 </tr>
