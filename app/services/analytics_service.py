@@ -47,7 +47,9 @@ def player_totals_and_averages(conn):
             CASE WHEN COUNT(sl.game_id) = 0 THEN 0 ELSE ROUND(1.0 * SUM(sl.PM) / COUNT(sl.game_id), 1) END AS avg_PM
 
         FROM players p
-        LEFT JOIN stat_line sl ON sl.player_id = p.id
+        LEFT JOIN stat_line sl
+            ON sl.player_id = p.id
+            AND COALESCE(sl.minutes, 0) > 0
         GROUP by p.id
         ORDER BY total_points DESC, avg_points DESC
         """
@@ -98,7 +100,9 @@ def leaders(conn, limit: int = 5):
                 p.jersey_number,
                 COALESCE(SUM(sl.{column}), 0) AS value
             FROM players p
-            LEFT JOIN stat_line sl ON sl.player_id = p.id
+            LEFT JOIN stat_line sl
+                ON sl.player_id = p.id
+                AND COALESCE(sl.minutes, 0) > 0
             GROUP by p.id
             ORDER BY value DESC
             LIMIT %s

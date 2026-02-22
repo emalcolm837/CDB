@@ -8,24 +8,25 @@ def get_player_totals(conn, player_id):
         """
         SELECT
             COUNT(*) AS games_played,
-            SUM(minutes) AS total_minutes,
-            SUM(points) AS total_points,
-            SUM(rebounds) AS total_rebounds,
-            SUM(OREB) AS total_OREB,
-            SUM(assists) AS total_assists,
-            SUM(steals) AS total_steals,
-            SUM(blocks) AS total_blocks,
-            SUM(fouls) AS total_fouls,
-            SUM(turnovers) AS total_turnovers,
-            SUM(FG) AS total_FG,
-            SUM(FGA) AS total_FGA,
-            SUM(FG3) AS total_FG3,
-            SUM(FGA3) AS total_FGA3,
-            SUM(FT) AS total_FT,
-            SUM(FTA) AS total_FTA,
-            SUM(PM) AS total_PM
+            COALESCE(SUM(minutes), 0) AS total_minutes,
+            COALESCE(SUM(points), 0) AS total_points,
+            COALESCE(SUM(rebounds), 0) AS total_rebounds,
+            COALESCE(SUM(OREB), 0) AS total_OREB,
+            COALESCE(SUM(assists), 0) AS total_assists,
+            COALESCE(SUM(steals), 0) AS total_steals,
+            COALESCE(SUM(blocks), 0) AS total_blocks,
+            COALESCE(SUM(fouls), 0) AS total_fouls,
+            COALESCE(SUM(turnovers), 0) AS total_turnovers,
+            COALESCE(SUM(FG), 0) AS total_FG,
+            COALESCE(SUM(FGA), 0) AS total_FGA,
+            COALESCE(SUM(FG3), 0) AS total_FG3,
+            COALESCE(SUM(FGA3), 0) AS total_FGA3,
+            COALESCE(SUM(FT), 0) AS total_FT,
+            COALESCE(SUM(FTA), 0) AS total_FTA,
+            COALESCE(SUM(PM), 0) AS total_PM
         FROM stat_line
         WHERE player_id = %s
+            AND COALESCE(minutes, 0) > 0
         """,
         (player_id,)
     )
@@ -47,24 +48,25 @@ def get_player_averages(conn, player_id):
     cursor.execute(
         """
         SELECT
-            ROUND(AVG(minutes), 2) AS avg_minutes,
-            ROUND(AVG(points), 1) AS avg_points,
-            ROUND(AVG(rebounds), 1) AS avg_rebounds,
-            ROUND(AVG(OREB), 1) AS avg_OREB,
-            ROUND(AVG(assists), 1) AS avg_assists,
-            ROUND(AVG(steals), 1) AS avg_steals,
-            ROUND(AVG(blocks), 1) AS avg_blocks,
-            ROUND(AVG(turnovers), 1) AS avg_turnovers,
-            ROUND(AVG(fouls), 1) AS avg_fouls,
-            ROUND(AVG(FG), 1) AS avg_FG,
-            ROUND(AVG(FGA), 1) AS avg_FGA,
-            ROUND(AVG(FG3), 1) AS avg_FG3,
-            ROUND(AVG(FGA3), 1) AS avg_FGA3,
-            ROUND(AVG(FT), 1) AS avg_FT,
-            ROUND(AVG(FTA), 1) AS avg_FTA,
-            ROUND(AVG(PM), 1) AS avg_PM
+            COALESCE(ROUND(AVG(minutes), 2), 0) AS avg_minutes,
+            COALESCE(ROUND(AVG(points), 1), 0) AS avg_points,
+            COALESCE(ROUND(AVG(rebounds), 1), 0) AS avg_rebounds,
+            COALESCE(ROUND(AVG(OREB), 1), 0) AS avg_OREB,
+            COALESCE(ROUND(AVG(assists), 1), 0) AS avg_assists,
+            COALESCE(ROUND(AVG(steals), 1), 0) AS avg_steals,
+            COALESCE(ROUND(AVG(blocks), 1), 0) AS avg_blocks,
+            COALESCE(ROUND(AVG(turnovers), 1), 0) AS avg_turnovers,
+            COALESCE(ROUND(AVG(fouls), 1), 0) AS avg_fouls,
+            COALESCE(ROUND(AVG(FG), 1), 0) AS avg_FG,
+            COALESCE(ROUND(AVG(FGA), 1), 0) AS avg_FGA,
+            COALESCE(ROUND(AVG(FG3), 1), 0) AS avg_FG3,
+            COALESCE(ROUND(AVG(FGA3), 1), 0) AS avg_FGA3,
+            COALESCE(ROUND(AVG(FT), 1), 0) AS avg_FT,
+            COALESCE(ROUND(AVG(FTA), 1), 0) AS avg_FTA,
+            COALESCE(ROUND(AVG(PM), 1), 0) AS avg_PM
         FROM stat_line
         WHERE player_id = %s
+            AND COALESCE(minutes, 0) > 0
         """,
         (player_id,)
     )
